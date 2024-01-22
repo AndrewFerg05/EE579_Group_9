@@ -6,4 +6,4 @@ Group 9:
         Sean Doherty
         Ciaran Petrie
 Outline:
-        Retorfit an RC car to be self-driving. The car should then play a game of skittles. The car should sense and then knock over black shittles whilst avoiding the white skittle.
+        Retorfit an RC car to be self-driving. The car should then play a game of skittles. The car should sense and then knock over black skittles whilst avoiding the white skittle.
