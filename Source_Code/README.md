@@ -1,3 +1,5 @@
+README for AF_system ino baseline version and AF library
+
 Sparkfun ICM_90248 Arduino library is required.
 
 Copy AF folder into libraries directory for Arduino
