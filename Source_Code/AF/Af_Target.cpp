@@ -1,4 +1,7 @@
 #include "AF_Target.h"
+#include <Servo.h>
+
+
 
 
 
@@ -19,15 +22,14 @@ void calculateTargets()
 
 
 
-
-long sendUltrasoundPing(int trigger, int echo)
+void sendUltrasoundPing(int triggerPin, int echoPin)
 {
   // Set up pins
-  pinMode(trigger, OUTPUT);  
-  pinMode(echo, INPUT); 
+  pinMode(triggerPin, OUTPUT);  
+  pinMode(echoPin, INPUT); 
 
   // Clear the output
-  digitalWrite(trigger, LOW);
+  digitalWrite(triggerPin, LOW);
   delayMicroseconds(2);
 
   // Send a 5ms ping
@@ -40,21 +42,33 @@ long sendUltrasoundPing(int trigger, int echo)
 }
 
 
+void setupServos() {
+  // COME BACK TO THIS
+  Servo ultrasoundServo = Servo();
+  const int ultrasoundServoPin = 0; // replace this
+}
+void setupUltrasound() {
+  const int echoPin = 26; // replace thiese
+  const int triggerPin = 27;
+}
 
 
-void ultrasoundScan() {
-  // NOTE: Figure how to setup servos in the new code configuration
 
-  int closestAngle = -1; // The angle, (0 is straight, -ve = left, +ve = right) to the can
+Target scanForTargets_Ultrasound() {
+
+  setupServos();
+  setupUltrasound();
+
+  Target closestTarget;
+  closestTarget.anglefromstraight = -1;
   float distanceReadings[180]; // 0 = most right, 180 = most left
 
-  int scanCount = 0; // A second (and third, fourth etc) takes place if the first scan fails
-  // up to ten scans
+  int scanCount = 0; // A second (and third, fourth etc) takes place if the first scan fails up to ten scans
 
-  while (closestAngle == -1 and scanCount < 10){
-    // SCAN FOR 180 DEGREES
+  while (closestTarget.anglefromstraight == -1 and scanCount < 10){
+    // SCAN  180 DEGREES
     for (int i = 0; i <= 180; i--){
-        sensorMount.write(sensorMountPin, i);
+        ultrasoundServo.write(ultrasoundServoPin, i);
         delay(5);
         distanceReadings[i] = 0.01723 * sendUltrasoundPing(triggerPin, echoPin);
     }
@@ -132,9 +146,16 @@ void ultrasoundScan() {
         lowerBoundary = furthestDistance_inLimits;
       } else {
         // CAN DETECTED!
-        // Average min and max to find the centre point of the can
-        closestAngle = round((leftmostAngle + rightmostAngle) / 2;)
+        // Average min and max to find the centre point of the can,
+        closestTarget.angleToTarget = round((leftmostAngle + rightmostAngle) / 2;)
         
+        closestTarget.distance = distanceReadings[closestTarget.angleToTarget]
+
+        // then move angle to the correct range, from 0 to 180 to -90 to 90
+        closestTarget.angleToTarget = closestTarget.angleToTarget - 90;
+
+        // Check what andrew wants done with 'angle from straight'
+
         Serial.println("");
         Serial.print("Closest object is now ");
         Serial.print(distanceReadings[closestAngle]);
@@ -149,12 +170,14 @@ void ultrasoundScan() {
 
   if (closestAngle != -1) {
     for (int i = 180; i >= closestAngle; i--) {
-    sensorMount.write(sensorMountPin, i);
+    ultrasoundServo.write(ultrasoundServoPin, i);
     delay(5);
   }
   } else {
     Serial.print("SCAN LIMITED REACHED: No can detected");
   }
+
+  return closestTarget
 
 
 }
