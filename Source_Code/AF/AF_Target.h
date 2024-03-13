@@ -8,8 +8,6 @@
 
 
 //Variable Definitions
-
-
 typedef struct {
     float distance;             //  m 
     float angleFromStraight;
@@ -24,5 +22,10 @@ extern Target End_Target;
 //Function Definitions
 extern void calculateTimeAndAngle(Target*);
 extern void calculateTargets(void);
+
+
+// Sean's Function Definitions
+extern void ultasoundScan();
+
 
 #endif
