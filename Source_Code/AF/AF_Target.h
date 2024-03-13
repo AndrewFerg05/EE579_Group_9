@@ -25,7 +25,10 @@ extern void calculateTargets(void);
 
 
 // Sean's Function Definitions
-extern void ultasoundScan();
+extern void setupServos();
+extern void setupUltrasound();
+extern double sendUltrasoundPing(triggerPin, echoPin);
+extern Target scanForTargets_Ultrasound();
 
 
 #endif
