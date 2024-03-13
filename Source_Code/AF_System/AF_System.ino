@@ -2,6 +2,7 @@
 #include "AF_IMU.h"
 #include "AF_scheduler.h"
 #include "AF_Target.h"
+#include "SD_Comms.h"
 
 
 #define slow_duration 500
@@ -157,15 +158,21 @@ void setup()
 {
   Serial.begin(115200);
   while (!Serial); //wait for connection
-  setupIMU();
+//  setupIMU();
   setupTimer();
+//  serialBT.begin("ESP32-BT");
+} 
 
-}
+
 
 
 void loop()
 {
-  
+    Target closestTarget = (Target){0, 0, 0, 0, false};
+    
+    closestTarget = scanForTargets_Ultrasound();
+    
+    while(1){}
     updateYaw();
 //    if (millis() - lastPrint > PRINT_SPEED) 
 //    {
@@ -181,6 +188,8 @@ void loop()
       {
         if(programme_ready_flag == 1)
         {
+            
+           
             straight_yaw = getYaw();
             //Default parameters
             //{Ditance, anglefromstraight, timeToTarget, angleToTarget, isWaypoint}
@@ -190,6 +199,10 @@ void loop()
             End_Target = (Target){20.0, straight_yaw, 120000, straight_yaw, true};
 
             //Replace with Bluetooth - Can add condition to not set 3 targets and leave last target as default
+            
+            
+            
+            
             //Set Target 0
             Targets[0].distance = 6;
             Targets[0].angleFromStraight = 30;
