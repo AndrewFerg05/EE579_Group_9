@@ -48,10 +48,8 @@ Target scanForTargets_Ultrasound() {
   // Setup pins 
   Servo ultrasoundServo = Servo();
   const int ultrasoundServoPin = 14; // replace this
-  const int echoPin = 26; // replace thiese
+  const int echoPin = 26; // replace these
   const int triggerPin = 27;
-
-
 
   Target closestTarget;
   closestTarget.angleToTarget = -1;
@@ -61,9 +59,7 @@ Target scanForTargets_Ultrasound() {
 
   while (closestTarget.angleToTarget == -1 and scanCount < 10){
     // SCAN  180 DEGREES
-    
     for (int i = 0; i <= 180; i++){
-//        Serial.println("Got here");
         ultrasoundServo.write(ultrasoundServoPin, i);
         delay(5);
         distanceReadings[i] = 0.01723 * sendUltrasoundPing(triggerPin, echoPin);
@@ -128,17 +124,17 @@ Target scanForTargets_Ultrasound() {
       }
       
       if (leftmostAngle - rightmostAngle <= 15) {
-        Serial.println("FALSE READING: Angle range was too small");
+        Serial.println("FALSE READING: Angle range was too small.");
         lowerBoundary = furthestDistance_inLimits;
       } else if (furthestDistance_inLimits - closestDistance_inLimits > 5){
         Serial.println("");
-        Serial.print("FALSE READING: distance range was too big: ");
+        Serial.print("FALSE READING: Distance range was too large.");
         Serial.println(furthestDistance_inLimits - closestDistance_inLimits);
         lowerBoundary = furthestDistance_inLimits;
       }  
         else if (leftmostAngle - rightmostAngle >= 75 ){
         Serial.println("");
-        Serial.print("FALSE READING: angle range was too big: ");
+        Serial.print("FALSE READING: Angle range was too large: ");
         Serial.println(leftmostAngle - rightmostAngle);
         lowerBoundary = furthestDistance_inLimits;
       } else {

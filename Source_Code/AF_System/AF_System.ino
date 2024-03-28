@@ -168,11 +168,8 @@ void setup()
 
 void loop()
 {
-    Target closestTarget = (Target){0, 0, 0, 0, false};
+   
     
-    closestTarget = scanForTargets_Ultrasound();
-    
-    while(1){}
     updateYaw();
 //    if (millis() - lastPrint > PRINT_SPEED) 
 //    {
@@ -199,8 +196,6 @@ void loop()
             End_Target = (Target){20.0, straight_yaw, 120000, straight_yaw, true};
 
             //Replace with Bluetooth - Can add condition to not set 3 targets and leave last target as default
-            
-            
             
             
             //Set Target 0
@@ -297,8 +292,13 @@ void loop()
       case target:
       {
 
+        Target closestTarget = (Target){0, 0, 0, 0, false};
+    
+        closestTarget = scanForTargets_Ultrasound();
+
         if (millis() - lastPrint > PRINT_SPEED) 
         {
+          closestTarget = scanForTargets_Ultrasound();
           Serial.print("TARGET");
           Serial.println();
           lastPrint = millis(); // Update lastPrint time
