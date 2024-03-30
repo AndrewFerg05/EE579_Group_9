@@ -157,10 +157,12 @@ void setupTimer()
 void setup()
 {
   Serial.begin(115200);
+  setupBluetooth();
   while (!Serial); //wait for connection
 //  setupIMU();
   setupTimer();
-//  serialBT.begin("ESP32-BT");
+  
+
 } 
 
 
@@ -170,7 +172,7 @@ void loop()
 {
    
     
-    updateYaw();
+//    updateYaw();
 //    if (millis() - lastPrint > PRINT_SPEED) 
 //    {
 //      actual_yaw= getYaw();
@@ -187,7 +189,7 @@ void loop()
         {
             
            
-            straight_yaw = getYaw();
+//            straight_yaw = getYaw();
             //Default parameters
             //{Ditance, anglefromstraight, timeToTarget, angleToTarget, isWaypoint}
             Targets[0] = (Target){10.0, straight_yaw, 0, 0.0, false};
@@ -195,21 +197,61 @@ void loop()
             Targets[2] = (Target){10.0, straight_yaw, 0, 0.0, true};
             End_Target = (Target){20.0, straight_yaw, 120000, straight_yaw, true};
 
+
             //Replace with Bluetooth - Can add condition to not set 3 targets and leave last target as default
+    
+          
+           for(int index = 0; index < 3; index++) { // max 3 readings
+            int readingType = getBluetoothNextStep(); // 0 for drive, 1 for weighpoint, 2 for non-weightpoint, 
+            if (readingType == 2) { 
+              serialBT.print("DRIVEEEEE");
+              break; // Time to drive so break out out of loop
+            }
+            Targets[index].distance = getBluetoothReading(index+1, 'd'); 
+            Serial.println(Targets[index].distance);
+            Targets[index].angleFromStraight = getBluetoothReading(index+1, 'a');
+            Serial.println(Targets[index].angleFromStraight);
+            if (readingType == 0) {
+              Targets[index].isWaypoint = true;
+            } else {
+              Targets[index].isWaypoint = false;
+            }
+            Serial.println(Targets[index].isWaypoint);
+           }
+
+           for (int i = 0; i < 3; i++) {
+            Serial.println("SUMMARY");
+            Serial.print("Can: ");
+            Serial.println(i);
+            Serial.print("Distance: ");
+            Serial.println(Targets[i].distance);
+            Serial.print("Angle: ");
+            Serial.println(Targets[i].angleFromStraight);
+            Serial.print("Waypoint: ");
+            Serial.println(Targets[i].isWaypoint);
+           }
+
+           Serial.println("Drive Mode");
+           while(1) {
+            delay(1000);
+           }
+
+           
+
+//            Targets[0].distance = 50;
+//            Targets[0].angleFromStraight = 0;
+//            Targets[0].isWaypoint = false;
+//
+//            
+//            Targets[1].distance = 100;
+//            Targets[1].angleFromStraight = 30;
+//            Targets[1].isWaypoint = true;
+//
+//            Targets[2].distance = 200;
+//            Targets[2].angleFromStraight = 40;
+//            Targets[2].isWaypoint = false;
+
             
-            
-            //Set Target 0
-            Targets[0].distance = 6;
-            Targets[0].angleFromStraight = 30;
-            Targets[0].isWaypoint = false;
-            //Set Target 1
-            Targets[1].distance = 7;
-            Targets[1].angleFromStraight = 30;
-            Targets[1].isWaypoint = true;
-            //Set Target 2 - If condition
-            Targets[2].distance = 8;
-            Targets[2].angleFromStraight = -30;
-            Targets[2].isWaypoint = false;
 
             calculateTargets();
             next_state = idle;

@@ -4,7 +4,9 @@
 
 extern void setupBluetooth();
 
-extern char getBluetoothReading();
+extern int getBluetoothReading(int, char);
+
+extern int getBluetoothNextStep(); 
 
 
 
