@@ -1,45 +1,53 @@
 #include "PID.h"
 
+float error = 0;
+float derivative = 0;
+float output = 0;
+float setup_flag = 0;
+
 void setupPID(PIDConfig* steer, int proportionalGain, int integralGain, int derivativeGain, float integralOverflow)
 {
     steer->kp = proportionalGain;
     steer->ki = integralGain;
     steer->kd = derivativeGain;
     steer->overflow = integralOverflow;
-    steer->prevError= 0;
+    steer->prevError = 0;
+    steer->integral = 0;
 }
 
 float PID(PIDConfig* steer, float setPoint, float currentPoint)
 {
-    float error;
-    float integral;
-    float derivative;
-    float output;
-    
-    // Calculate error
-    error = setPoint - currentPoint;
-
-    // Calcualte integral term
-    integral = integral + error;
-
-    // Calcualte derivative term
-    derivative = error - steer->prevError;
-
-    // Determine the output signal
-    output = (steer->kp*error) + (steer->ki*integral) + (steer->kd*derivative);
-
-    // Store the error for next interation
-    steer->prevError = error;
-
-    // if the integral gets out of hand reset to 0
-    if (integral > steer->overflow)
+    // Initialise Previous Error
+    if (setup_flag == 0)
     {
-        integral = 0;
+        setup_flag = 1;
+        steer->prevError = setPoint - currentPoint;
     }
 
-    // return PID output signal
+    // Calculate Error
+    error = setPoint - currentPoint;
+
+    // Calcualte Derivative Term
+    derivative = error - steer->prevError;
+
+    // Determine Output
+    output = (steer->kp * error) + (steer->ki * steer->integral) + (steer->kd * derivative);
+
+    // Store Preious Error and Integral Error
+    steer->integral += error;
+    steer->prevError = error;
+
+
+    // If Integral Exceed Overflow Reset
+    if (steer->integral > steer->overflow)
+    {
+        steer->integral = 0;
+    }
+
     return output;
 }
+
+
 
 void setupServo(servoConfig* limits, int minDegrees, int maxDegrees, int minMicroSeconds, int maxMicroSeconds)
 {

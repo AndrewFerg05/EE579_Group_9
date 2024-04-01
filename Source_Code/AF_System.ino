@@ -2,12 +2,13 @@
 #include "AF_IMU.h"
 #include "AF_scheduler.h"
 #include "AF_Target.h"
+#include "PID.h"
 
 
 #define slow_duration 500
 #define targetHit_duration 5000
-#define EndProtocol_duration 30000
-#define SystemEnd_duration 35000
+#define EndProtocol_duration 300000
+#define SystemEnd_duration 350000
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -22,7 +23,10 @@ int target_select = 0;
 Target Targets[3];
 Target End_Target;
 
-
+//PID Variables
+PIDConfig Steer_PID;
+servoConfig Steer_servo;
+float control_signal;
 
 
 //State Machine Variables
@@ -151,7 +155,6 @@ void setupTimer()
 
 
 
-
 //Main
 void setup()
 {
@@ -159,6 +162,8 @@ void setup()
   while (!Serial); //wait for connection
   setupIMU();
   setupTimer();
+  setupServo(&Steer_servo, 45, 135, 1500, 2000);
+  setupPID(&Steer_PID, P_Gain, I_Gain, D_Gain, I_Limit);
 
 }
 
@@ -191,16 +196,16 @@ void loop()
 
             //Replace with Bluetooth - Can add condition to not set 3 targets and leave last target as default
             //Set Target 0
-            Targets[0].distance = 6;
-            Targets[0].angleFromStraight = 30;
+            Targets[0].distance = 10;
+            Targets[0].angleFromStraight = 215;
             Targets[0].isWaypoint = false;
             //Set Target 1
-            Targets[1].distance = 7;
-            Targets[1].angleFromStraight = 30;
+            Targets[1].distance = 10;
+            Targets[1].angleFromStraight = 215;
             Targets[1].isWaypoint = true;
             //Set Target 2 - If condition
-            Targets[2].distance = 8;
-            Targets[2].angleFromStraight = -30;
+            Targets[2].distance = 10;
+            Targets[2].angleFromStraight = 215;
             Targets[2].isWaypoint = false;
 
             calculateTargets();
@@ -253,9 +258,11 @@ void loop()
       
       case drive:
       {
-
         //DRIVE
         //CONTROL ANGLE Targets[target_select].angleToTarget
+
+        actual_yaw= getYaw();
+        control_signal = PID(&Steer_PID, Targets[target_select].angleToTarget, actual_yaw);
         
         if (millis() - lastPrint > PRINT_SPEED) 
         {

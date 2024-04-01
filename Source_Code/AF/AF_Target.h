@@ -2,7 +2,7 @@
 #define AF_TARGET_H_
 
 //Tuneable Parameters
-#define car_speed 2     //  m/s
+#define car_speed 0.5     //  m/s
 #define time_offset 1000
 #define angle_offset 0 
 
