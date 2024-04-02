@@ -3,7 +3,7 @@
 #include "AF_scheduler.h"
 #include "AF_Target.h"
 #include "PID.h"
-
+#include "BT_Comms.h"
 
 #define slow_duration 500
 #define targetHit_duration 5000
@@ -58,20 +58,18 @@ hw_timer_t *Timer0 = NULL;
 
 
 //Interrupts
-  //Scheduler Interrupt - Clocked @ 1ms - handles state transitions
+//Scheduler Interrupt - Clocked @ 1ms - handles state transitions
 void IRAM_ATTR Timer0_ISR()
 {
   CurrentTime = increment(CurrentTime);
 
-
-  if(IsScheduled(StartFlag))
-  {
-    start_flag = 1;
-    StartFlag.ms = -1;
-    
-  }
-
-
+//  Testing Only
+//  if(IsScheduled(StartFlag))
+//  {
+//    start_flag = 1;
+//    StartFlag.ms = -1;
+//    
+//  }
 
 
   if(IsScheduled(ProgrammeReady))
@@ -164,6 +162,7 @@ void setup()
   setupTimer();
   setupServo(&Steer_servo, 45, 135, 1500, 2000);
   setupPID(&Steer_PID, P_Gain, I_Gain, D_Gain, I_Limit);
+  setupBluetooth();
 
 }
 
@@ -194,24 +193,49 @@ void loop()
             Targets[2] = (Target){10.0, straight_yaw, 0, 0.0, true};
             End_Target = (Target){20.0, straight_yaw, 120000, straight_yaw, true};
 
-            //Replace with Bluetooth - Can add condition to not set 3 targets and leave last target as default
-            //Set Target 0
-            Targets[0].distance = 10;
-            Targets[0].angleFromStraight = 215;
-            Targets[0].isWaypoint = false;
-            //Set Target 1
-            Targets[1].distance = 10;
-            Targets[1].angleFromStraight = 215;
-            Targets[1].isWaypoint = true;
-            //Set Target 2 - If condition
-            Targets[2].distance = 10;
-            Targets[2].angleFromStraight = 215;
-            Targets[2].isWaypoint = false;
+
+            //BlueTooth Definition
+            int numberTargets = getBluetoothNumberTargets();
+            
+            for(int index = 0; index < numberTargets; index++) 
+            {
+              int readingType = getBluetoothInputType(); // 0 for Target, 1 for Waypoint
+               
+              Targets[index].distance = getBluetoothReading(index+1, 'd') / 100; 
+              Serial.println(Targets[index].distance);
+              Targets[index].angleFromStraight = getBluetoothReading(index+1, 'a');
+              Serial.println(Targets[index].angleFromStraight);
+              
+              if (readingType == 0) 
+              {
+                Targets[index].isWaypoint = false;
+              } 
+              else 
+              {
+                Targets[index].isWaypoint = true;
+              }
+              
+              Serial.println(Targets[index].isWaypoint);
+           }
+
+//            //Non-BlueTooth Definitions            
+//            //Set Target 0
+//            Targets[0].distance = 10;
+//            Targets[0].angleFromStraight = 215;
+//            Targets[0].isWaypoint = false;
+//            //Set Target 1
+//            Targets[1].distance = 10;
+//            Targets[1].angleFromStraight = 215;
+//            Targets[1].isWaypoint = true;
+//            //Set Target 2 - If condition
+//            Targets[2].distance = 10;
+//            Targets[2].angleFromStraight = 215;
+//            Targets[2].isWaypoint = false;
 
             calculateTargets();
             next_state = idle;
 
-            StartFlag = schedule(2000); //Testing Only
+//            StartFlag = schedule(2000); //Testing Only
 
             Serial.print("PROGRAMME READY");
             Serial.println();
@@ -233,6 +257,8 @@ void loop()
       {
 
         //Change Start Flag with Bluetooth
+        start_flag = getBluetoothFlag();
+        
         if(start_flag == 1)
         {
           EndProtocol = schedule(EndProtocol_duration);   //Drive away with 20s to go
