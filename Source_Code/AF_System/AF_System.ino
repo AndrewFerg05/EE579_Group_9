@@ -9,6 +9,8 @@
 #define targetHit_duration 5000
 #define EndProtocol_duration 30000
 #define SystemEnd_duration 35000
+// THIS FILE
+
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -219,24 +221,10 @@ void loop()
             Serial.println(Targets[index].isWaypoint);
            }
 
-           for (int i = 0; i < 3; i++) {
-            Serial.println("SUMMARY");
-            Serial.print("Can: ");
-            Serial.println(i);
-            Serial.print("Distance: ");
-            Serial.println(Targets[i].distance);
-            Serial.print("Angle: ");
-            Serial.println(Targets[i].angleFromStraight);
-            Serial.print("Waypoint: ");
-            Serial.println(Targets[i].isWaypoint);
-           }
 
            Serial.println("Drive Mode");
-           while(1) {
-            delay(1000);
-           }
-
-           
+   
+//            UNCOMMENT THIS FOR TESTING
 
 //            Targets[0].distance = 50;
 //            Targets[0].angleFromStraight = 0;
