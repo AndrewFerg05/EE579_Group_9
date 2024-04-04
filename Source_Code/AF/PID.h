@@ -34,6 +34,6 @@ extern float setup_flag;
 extern void setupPID(PIDConfig*, int, int, int, float);
 extern float PID(PIDConfig*, float, float);
 extern void setupServo(servoConfig*, int, int, int, int);
-extern int steeringMs(servoConfig*, float);
+extern int deg2dc(servoConfig*, float);
 
 #endif
