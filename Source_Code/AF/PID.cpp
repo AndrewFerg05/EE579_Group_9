@@ -49,19 +49,18 @@ float PID(PIDConfig* steer, float setPoint, float currentPoint)
 
 
 
-void setupServo(servoConfig* limits, int minDegrees, int maxDegrees, int minMicroSeconds, int maxMicroSeconds)
+void setupServo(servoConfig* limits, int minDegLimit, int maxDegLimit, int MicroSecondsStart, int MicroSecondsEnd)
 {
-    limits->minAngle = minDegrees;
-    limits->maxAngle = maxDegrees;
-    limits->minMicro = minMicroSeconds;
-    limits->maxMicro = maxMicroSeconds;
+    limits->minAngle = minDegLimit;
+    limits->maxAngle = maxDegLimit;
+    limits->minMicro = MicroSecondsStart;
+    limits->maxMicro = MicroSecondsEnd;
+    limits->msPerDeg = (limits->maxMicro - limits->minMicro) / 180.00;
 }
 
-int steeringMs(servoConfig* limits, float controlSignal)
+int deg2dc(servoConfig* limits, float controlSignal, int PWMfreq)
 {
-    int microSeconds;
-
-    // Check PID control signal has no exceeded limits of servo
+    // Check PID control signal has not exceeded limits of servo
     if (controlSignal > limits->maxAngle)
     {
         controlSignal = limits->maxAngle;
@@ -71,9 +70,15 @@ int steeringMs(servoConfig* limits, float controlSignal)
         controlSignal = limits->minAngle;
     }
 
-    // re-map limits of servo to microSeconds
-    microSeconds = (controlSignal-limits->minAngle)/(limits->maxAngle-limits->minAngle) * (limits->maxMicro - limits->minMicro) + limits->minMicro;
+    // Period in microseconds
+    period = (1 / PWMfreq) * 1000000)
+
+    // Pulse width in micro seconds
+    pulseWidth = limits->minMicro + limits->msPerDeg * controlSignal
+
+    // duty cycle expressed as a percentage
+    int dutyCycle = (pulseWidth / period) * 100;
 
     // return microSeconds
-    return microSeconds;
+    return dutyCycle;
 }
