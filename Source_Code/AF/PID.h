@@ -24,6 +24,7 @@ typedef struct servoConfig{
     int maxMicro;
     int minAngle;
     int maxAngle;
+    float msPerDeg;
 }servoConfig;
 
 // Variable Definitions
