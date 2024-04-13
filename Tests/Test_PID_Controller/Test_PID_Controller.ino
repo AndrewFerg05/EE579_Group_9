@@ -1,16 +1,31 @@
+//Code for testing the PID controller for the steering
+//Programme ESP32 - then disconnect from computer and connect the ESP32 to the 9V battery
+//Car waits until BT is connected
+//Once connected IMU readings are taken for 2 seconds
+//This is indicated as finished when the BT message is trasnmitted prompting the user to enter a 1 and the wheels twitch
+//Once a 1 is entered, the car should drive on an angle offset defined by TARGET_ANGLE from its starting orientation
+//Car should drive for 4 seconds before stopping
+
+//Used to configure the kp, ki, kd parameters of the controller - defined in the setupPID() function in PID.cpp
+//Can also configure how the PID control error singal is mapped to steering changes in carControl()
+
+//Can check IMU calibration using Test_IMU_Reading.ino
+//Can connect to serial monitor to check the control signal asnd angle corrections
+//Can print values to BT serial monitor using BTprintfloat() or BTprintint()
+
 
 #include "BT_Comms.h"
 #include "AF_IMU.h"
 #include "PID.h"
 #include "AF_Scheduler.h"
 
-#define TARGET_ANGLE -60
-#define MOTOR_FORWARD_PIN 12
-#define MOTOR_REVERSE_PIN 13
-#define MOTOR_STEER_PIN 5
+#define TARGET_ANGLE 0            //Change to drive on different set points from starting direction
+#define MOTOR_FORWARD_PIN 13
+#define MOTOR_REVERSE_PIN 12
+#define MOTOR_STEER_PIN 17
 #define DRIVE_PWM_FREQ 10
 #define STEER_PWM_FREQ 50
-
+#define PID_INTERVAL 5            //Change to set duration in ms between PID updates
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -25,10 +40,12 @@ enum State
 
 enum State current_state = programme, next_state = programme;
 bool start_flag = 0;
+bool PID_flag = 1;
 
 //Events
 Time CurrentTime = {0,0};
 Time IdleMode = {0, -1};
+Time PIDUpdate = {0, -1};
 
 void IRAM_ATTR Timer0_ISR()
 {
@@ -38,6 +55,14 @@ void IRAM_ATTR Timer0_ISR()
   {
     next_state = idle;
     IdleMode.ms = -1;
+    PIDUpdate.ms = -1;
+    
+  }
+
+  if(IsScheduled(PIDUpdate))
+  {
+    PID_flag = 1;
+    PIDUpdate = schedule(PID_INTERVAL);
   }
 }
 
@@ -165,7 +190,14 @@ void loop()
       case programme:
       {
         actual_yaw= getYaw();
-        desired_yaw = normalizeAngle(actual_yaw + TARGET_ANGLE);
+        desired_yaw = normalizeAngle360(actual_yaw + TARGET_ANGLE);
+
+        
+        Serial.print("Desired yaw: ");
+        Serial.println(desired_yaw, 0);
+        Serial.print("Actual yaw: ");
+        Serial.println(actual_yaw, 0);
+        Serial.println();
         Serial.println("Programme");      
         break;
       }
@@ -190,6 +222,7 @@ void loop()
                      
         forward(0);
         reverse(0);
+        delay(1000);
         steer(20);
         delay(1000);
                 steer(-20);
@@ -203,6 +236,7 @@ void loop()
           next_state = drive;
           start_flag = 0;
           IdleMode = schedule(4000);
+          PIDUpdate = schedule(PID_INTERVAL);
         }
         break;
       }
@@ -211,7 +245,13 @@ void loop()
       {
 
       actual_yaw= getYaw();
-      control_signal = PID(&Steer_PID, desired_yaw, actual_yaw);
+      if( PID_flag == 1)
+      {
+//        BTprintfloat(actual_yaw);
+        carControl(control_signal);
+        control_signal = PID(&Steer_PID, desired_yaw, actual_yaw);
+        PID_flag = 0;
+      }
     
     if (millis() - lastPrint > PRINT_SPEED) 
     {
@@ -223,7 +263,7 @@ void loop()
       Serial.println(control_signal, 0);
       lastPrint = millis(); // Update lastPrint time
     }
-      carControl(control_signal);
+      
         break;
       }
     }
