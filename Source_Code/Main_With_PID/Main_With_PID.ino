@@ -1,9 +1,9 @@
 //Should drive to target area and scan once
 //If can detected attempts to hit before moving onto next target
 
-#include "AF_IMU.h"
-#include "AF_scheduler.h"
-#include "AF_Target.h"
+#include "IMU.h"
+#include "Scheduler.h"
+#include "Target.h"
 #include "PID.h"
 #include "BT_Comms.h"
 

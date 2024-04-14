@@ -5,8 +5,11 @@
 
 //Function Definitions
 extern void setupBluetooth();
-extern int getBluetoothReading(int, char);
+extern float getBluetoothReading(int, char);
 extern int getBluetoothInputType(); 
 extern int getBluetoothNumberTargets();
 extern int getBluetoothFlag();
+extern void BTprintint(int);
+extern void BTprintfloat(float);
+extern void BTprintError(int);
 #endif

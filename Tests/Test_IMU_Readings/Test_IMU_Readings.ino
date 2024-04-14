@@ -18,7 +18,7 @@
 //13/04/24 - Known Issue - the average yaw returned by getYaw() does not transition smoothly from 360 degrees back to 0 degrees
 
 
-#include "AF_IMU.h"
+#include "IMU.h"
 
 //Variables
 float actual_yaw = 0;

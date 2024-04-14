@@ -3,9 +3,9 @@
 //Scans and moves up to 10x whilst can detected or until can is in front of car
 //Attempts to hit and then moves on to next target with PID 
 
-#include "AF_IMU.h"
-#include "AF_scheduler.h"
-#include "AF_Target.h"
+#include "IMU.h"
+#include "Scheduler.h"
+#include "Target.h"
 #include "PID.h"
 #include "BT_Comms.h"
 

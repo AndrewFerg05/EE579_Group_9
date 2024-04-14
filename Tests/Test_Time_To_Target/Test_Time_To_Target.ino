@@ -19,8 +19,8 @@
 
 
 #include "BT_Comms.h"
-#include "AF_Target.h"
-#include "AF_Scheduler.h"
+#include "Target.h"
+#include "Scheduler.h"
 
 #define slow_duration 500         //Set how long the car slows down when it reaches target in ms
 

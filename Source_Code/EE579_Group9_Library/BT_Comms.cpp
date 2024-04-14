@@ -5,7 +5,7 @@ BluetoothSerial serialBT;
 
 void setupBluetooth() 
 {
-  serialBT.begin("ESP32-BT");
+  serialBT.begin("ESP32-BT - 2");
 
   //Wait For Connection
   while (!serialBT.connected(1000)) 
@@ -17,10 +17,10 @@ void setupBluetooth()
   Serial.println("Bluetooth connected!");
  }
 
-int getBluetoothReading(int n, char measurementType) {
+float getBluetoothReading(int n, char measurementType) {
   
   bool waitingForReading = true;
-  int reading = 0;
+  float reading = 0;
 
   if (measurementType == 'd') {
     serialBT.print("Enter distance to target ");
@@ -37,7 +37,8 @@ int getBluetoothReading(int n, char measurementType) {
   {
     if (serialBT.available()) {
       reading = serialBT.parseInt();
-
+      Serial.println("Reading: ");
+      Serial.print(reading);
       while(true) 
       {
         // get rid of the 0
@@ -58,7 +59,7 @@ int getBluetoothReading(int n, char measurementType) {
       }
 
       else if (measurementType == 'a') {
-        if (reading >= -90 and reading < 90) 
+        if (reading >= -180 and reading < 180) 
         {
           waitingForReading = false;
         } else {
@@ -70,7 +71,8 @@ int getBluetoothReading(int n, char measurementType) {
     delay(100);
   }
     
-    
+Serial.println("Reading: ");
+Serial.print(reading);    
 return reading;
 }
 
@@ -185,4 +187,21 @@ int getBluetoothFlag()
     delay(100);
     }
     return reading;
+}
+
+
+void BTprintint(int a )
+{
+  serialBT.print(a);
+}
+
+void BTprintError(int a)
+{
+  serialBT.print("Error ");
+  serialBT.println(a);
+}
+
+void BTprintfloat(float a)
+{
+  serialBT.println(a,0);
 }

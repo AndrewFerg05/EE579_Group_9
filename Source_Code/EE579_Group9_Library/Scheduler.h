@@ -1,7 +1,5 @@
-
-
-#ifndef AF_SCHEDULER_H_
-#define AF_SCHEDULER_H_
+#ifndef SCHEDULER_H_
+#define SCHEDULER_H_
 
 //Function to check if events are scheduled for the current cycle
 #define IsScheduled(X) ((CurrentTime.s == X.s) && (CurrentTime.ms == X.ms))
