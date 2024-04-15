@@ -2,8 +2,8 @@
 #include "ICM_20948.h"
 
 
-#ifndef AF_IMU_H_
-#define AF_IMU_H_
+#ifndef IMU_H_
+#define IMU_H_
 #define PI 3.14159265
 #define WIRE_PORT Wire 
 #define AD0_VAL 1  

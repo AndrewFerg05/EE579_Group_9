@@ -1,24 +1,24 @@
-#include "AF_IMU.h"
+#include "IMU.h"
 
 
 //Variables
     //Gyro
 float Gscale = (PI / 180.0) * 0.00763;
-float G_offset[3] = {-297.8, -110.7, 50.7};
+float G_offset[3] = {24.2, 55.8, 3.0};
 
     //Accelerometer
-float A_B[3] = {5.61 , -456.55 , -447.61};
+float A_B[3] = {-44.53, -2.87, 417.58};
 float A_Ainv[3][3] = {
-{ 0.06046 , 0.0001 , -0.00059 },
-{ 0.0001 , 0.06149 , 0.00063 },
-{ -0.00059 , 0.00063 , 0.06018 }};
+{ 0.0538 , 0.00281 , -0.00146 },
+{ 0.00281 , 0.06101 , 0.00051 },
+{ -0.00146 , 0.00051 , 0.06159 }};
 
     //Magnetometer
-float M_B[3] = { -290.97 , -297.63 , 152.36};
+float M_B[3] =  {-178.85, 169.83, 35.77};
 float M_Ainv[3][3] = {
-{ 3.58666 , 0.01133 , -0.1228 },
-{ 0.01133 , 3.37577 , 0.05006 },
-{ -0.1228 , 0.05006 , 3.25787 }};
+{ 3.03549 , -0.00346 , -0.04152 },
+{ -0.00346 , 2.83902 , 0.08724 },
+{ -0.04152 , 0.08724 , 2.81818 }};
 
 float declination = -14.84;
 
@@ -230,9 +230,10 @@ void updateYaw()
   }
 }
 
-float average_Yaw[5] = {0.0, 0.0, 0.0, 0.0, 0.0,};
+float average_Yaw[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
 int i = 0;
 int flag = 0;
+
   //Calculate Yaw
 float getYaw()
 {
@@ -242,14 +243,16 @@ float getYaw()
       if (yaw < 0) yaw += 360.0;
       if (yaw >= 360.0) yaw -= 360.0;
 
+      // return yaw;
+
       
       if (i==4) flag = 1;
       if (i==5) i = 0;
       average_Yaw[i] = yaw;
       i++;
-
       if (flag == 0) return yaw;
-      
-      return (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4])/5;
 
+
+      return (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4])/5;
+      
 }
