@@ -483,7 +483,7 @@ void loop()
              next_state = stabilize_IMU;      //Allow some IMU readings to be taken
              HitMode = schedule(500);         //Schedule Transition to hit mode
              closestTarget.distance = closestTarget.distance/100;    //Convert to m
-             calculateTimeAndAngle(&closestTarget);       //Note calculating with angle from car direction not heading - heading calculated in Stabalize_IMU before PID 
+             calculateTime(&closestTarget);       //Note calculating with angle from car direction not heading - heading calculated in Stabalize_IMU before PID 
          } else 
          {
               Serial.println("UNABLE TO LOCATE TARGET");
@@ -500,7 +500,7 @@ void loop()
       if(target_select != 1)
       { 
       closestTarget.angleToTarget = normalizeAngle360( closestTarget.angleToTarget + actual_yaw);              //Calculate absolute angle to can
-      calculateTimeAndAngle(&closestTarget);                  //Calculate params 
+      calculateTime(&closestTarget);                  //Calculate params 
           if (millis() - lastPrint > PRINT_SPEED) 
         {
           Serial.print("Stabilize_IMU with calcs");

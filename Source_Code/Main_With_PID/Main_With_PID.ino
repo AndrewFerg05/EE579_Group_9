@@ -453,7 +453,7 @@ void loop()
       {
         actual_yaw= getYaw();
         closestTarget.angleToTarget = normalizeAngle360(closestTarget.angleToTarget + actual_yaw);              //Calculate absolute angle to can
-        calculateTimeAndAngle(&closestTarget);                  //Calculate params 
+        calculateTime(&closestTarget);                  //Calculate params 
           if (millis() - lastPrint > PRINT_SPEED) 
         {
           Serial.print("Stabilize_IMU");
