@@ -374,7 +374,9 @@ void loop()
 
       case idle:
       {
-
+        forward(0);
+        reverse(0);
+        steer(0);
         //Wait for BT start signal
         start_flag = getBluetoothFlag();
         

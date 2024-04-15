@@ -356,6 +356,9 @@ void loop()
       {
 
         //Wait for BT start signal
+        forward(0);
+        reverse(0);
+        steer(0);
         start_flag = getBluetoothFlag();
         
         if(start_flag == 1)
