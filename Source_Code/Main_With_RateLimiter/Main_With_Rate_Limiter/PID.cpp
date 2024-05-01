@@ -1,4 +1,5 @@
 #include "PID.h"
+#include "BT_Comms.h"
 #include <cstdlib>
 
 float error = 0;
@@ -62,31 +63,39 @@ float rateLimiter(int desiredAngle, int currentAngle, int currentSteering)
     error *= -1;
   }
 
-  BTprintfloat(abs(prevError - error));
-  BTprintfloat(abs(prevError) - abs(error));
-  BTprintfloat(abs(abs(prevError) - abs(error));
-  BTprintfloat(0);
+  if (error > 5) {
+    currentSteering += maxRate;
+  } else if (error < -5) {
+    currentSteering -= maxRate;
+  }
+
+//  BTprintfloat(abs(prevError - error));
+//  BTprintfloat(abs(prevError) - abs(error));
+//  BTprintfloat(abs(abs(prevError) - abs(error)));
+//  BTprintfloat(0);
 //  BTprintfloat(prevError);
 //  BTprintfloat(error);
 //  BTprintfloat(0);
 
   
-  if (abs(abs(prevError) - abs(error)) < 10)
-  {
-    prevError = error;
-  }
-  else
-  {
-    error = prevError;
-  }
+//  if (abs(abs(prevError) - abs(error)) < 40)
+//  {
+//    prevError = error;
+//  }
+//  else
+//  {
+//    error = prevError;
+//  }
 
 //  currentSteering = error;
 
-  if (currentSteering < error) {
-    currentSteering += 1;
-  } else if (currentSteering > error) {
-    currentSteering -= 1;
-  }
+//  BTprintfloat(error);
+//
+//  if (currentSteering < error) {
+//    currentSteering += 1;
+//  } else if (currentSteering > error) {
+//    currentSteering -= 1;
+//  }
 
 //  if (error < 5 and error > -5) {
 //    currentSteering = 0;
@@ -100,11 +109,13 @@ float rateLimiter(int desiredAngle, int currentAngle, int currentSteering)
 //    currentSteering = currentSteering + maxRate;
 //   } 
    
-   if (currentSteering < -20) {
-      currentSteering = -20;
-     } else if (currentSteering > 20) {
-      currentSteering = 20;
+   if (currentSteering < -10) {
+      currentSteering = -10;
+     } else if (currentSteering > 10) {
+      currentSteering = 10;
      }
+
+   BTprintfloat(currentSteering);
 
    return currentSteering;
 }

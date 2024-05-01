@@ -233,29 +233,108 @@ void updateYaw()
   }
 }
 
+//float average_Yaw[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+//int i = 0;
+//int flag = 0;
+//
+//  //Calculate Yaw
+//float getYaw()
+//{
+//      yaw   = atan2((q[1] * q[2] + q[0] * q[3]), 0.5 - ( q[2] * q[2] + q[3] * q[3]));
+//      yaw   *= 180.0 / PI;
+//      yaw = -(yaw + declination);
+//      if (yaw < 0) yaw += 360.0;
+//      if (yaw >= 360.0) yaw -= 360.0;
+//
+//      // return yaw;
+//
+//      
+//      if (i==4) flag = 1;
+//      if (i==5) i = 0;
+//      average_Yaw[i] = yaw;
+//      i++;
+//      if (flag == 0) return yaw;
+//
+////      return yaw;
+//      return (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4])/5;
+//      
+//}
+
+
 float average_Yaw[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+float prev_yaw = 0;
+float average = 0;
+float wrong_count = 0;
 int i = 0;
 int flag = 0;
 
   //Calculate Yaw
+//float getYaw()
+//{
+//      yaw   = atan2((q[1] * q[2] + q[0] * q[3]), 0.5 - ( q[2] * q[2] + q[3] * q[3]));
+//      yaw   *= 180.0 / PI;
+//      yaw = -(yaw + declination);
+//      if (yaw < 0) yaw += 360.0;
+//      if (yaw >= 360.0) yaw -= 360.0;
+//
+//      // return yaw;
+//
+//      
+//      if (i==4) flag = 1;
+//      if (i==5) i = 0;
+//      average_Yaw[i] = yaw;
+//      i++;
+//      if (flag == 0) return yaw;
+//
+//      return yaw;
+////      return (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4])/5;
+//      
+//}
+
+
+
+
 float getYaw()
 {
+    
       yaw   = atan2((q[1] * q[2] + q[0] * q[3]), 0.5 - ( q[2] * q[2] + q[3] * q[3]));
       yaw   *= 180.0 / PI;
       yaw = -(yaw + declination);
       if (yaw < 0) yaw += 360.0;
       if (yaw >= 360.0) yaw -= 360.0;
-
       // return yaw;
-
-      
-      if (i==4) flag = 1;
+     
+      if (i==4)
+      {
+        prev_yaw = (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4])/5;
+        flag = 1;
+       
+      }
+ 
       if (i==5) i = 0;
+ 
       average_Yaw[i] = yaw;
       i++;
       if (flag == 0) return yaw;
-
-      return yaw;
-//      return (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4])/5;
-      
+ 
+      average = (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4])/5;
+ 
+      if(((average - prev_yaw) > 30)||((average - prev_yaw) < -30))
+      {
+        wrong_count++;
+ 
+        if(wrong_count > 7)
+        {
+          wrong_count = 0;
+          prev_yaw = average;
+        }
+ 
+        return prev_yaw;
+      }
+      else
+      {
+        wrong_count = 0;
+        prev_yaw = average;
+        return average;
+      }     
 }
