@@ -171,7 +171,7 @@ void setup()
   setupDrive();
   setupIMU();
   setupTimer();
-  setupBluetooth();
+//  setupBluetooth();
 }
 
 
@@ -262,13 +262,17 @@ void loop()
 
       case idle:
       {
+        BTprintfloat(1);
 
         //Wait for BT start signal
         forward(0);
         reverse(0);
         steer(0);
         start_flag = getBluetoothFlag();
-
+//
+//        delay(1000);
+//        start_flag = 1;
+        
         if(start_flag == 1)
         {
           EndProtocol = schedule(EndProtocol_duration);   //Drive away with 20s to go
@@ -295,9 +299,10 @@ void loop()
       
       case drive:
       {
+        BTprintfloat(2);
         if(target_select == 0)
         {
-          forward(100);
+          forward(50);
           steer(0);
             Serial.print("DRIVE FIRST");
             Serial.println();
@@ -327,6 +332,7 @@ void loop()
       
       case slow:
       {
+        BTprintfloat(3);
         forward(0);
         reverse(50);
         steer(0);
@@ -342,9 +348,10 @@ void loop()
 
       case target:
       {
+        BTprintfloat(4);
         reverse(0);
            
-        strikeCanCloseDistance();
+        //strikeCanCloseDistance();
         delay(1000);
         next_state = stabilize_IMU;
         DriveMode = schedule(500);
