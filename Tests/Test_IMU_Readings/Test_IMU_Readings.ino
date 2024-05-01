@@ -19,9 +19,12 @@
 
 
 #include "IMU.h"
+#include "CarControl.h"
+#include "BT_Comms.h"
 
 //Variables
 float actual_yaw = 0;
+float steerAngle = 0;
 
 //Test Print Variables
 #define PRINT_SPEED 200       // ms between prints
@@ -32,16 +35,23 @@ void setup()
   Serial.begin(115200);
   while (!Serial);            //wait for connection
   setupIMU();
+  setupDrive();
+  setupBluetooth();
+  getBluetoothFlag();
 
 }
 
 void loop() {
     updateYaw();               //Update quaternion matrix
+    forward(100);
+    steer(0);
+    
     
     if (millis() - lastPrint > PRINT_SPEED) 
     {
       actual_yaw= getYaw();           //Get current yaw
       Serial.print(actual_yaw, 0);    //Print current yaw
+      BTprintfloat(actual_yaw);
       Serial.println();
       lastPrint = millis();           // Update lastPrint time
     }

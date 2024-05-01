@@ -14,7 +14,7 @@
 #define EndProtocol_duration 100000
 #define SystemEnd_duration 120000
 
-#define RATELIMITER_INTERVAL 100
+#define RATELIMITER_INTERVAL 50
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -180,7 +180,6 @@ void loop()
 {
     
     updateYaw();  // Update yaw as frequently as possible to keep IMU fresh 
-    turnServo(90);
     
     switch(current_state)
     {
@@ -188,13 +187,13 @@ void loop()
       {
         
         // Stabilise the IMU by running it for some time
-        for(int i = 0; i < 50; i++) {
+        for(int i = 0; i < 30; i++) {
           updateYaw();
           getYaw();
         }
 
-       
-        straight_yaw = getYaw(); // set straight yaw: the reference for all other angles
+        straight_yaw = getYaw();
+        //straight_yaw = getYaw(); // set straight yaw: the reference for all other angles
         
         if(programme_ready_flag == 1)
         {
@@ -295,6 +294,7 @@ void loop()
           forward(100); 
           RateLimiter_Flag = 0;
 //          BTprintfloat(currentSteering);
+//          BTprintfloat(actual_yaw);
           
         }
         
@@ -352,7 +352,7 @@ void loop()
       
       case endsequence:
       {
-        actual_yaw= getYaw();
+        actual_yaw = getYaw();
         if( RateLimiter_Flag == 1)
         {
           currentSteering = rateLimiter(Targets[target_select].angleFromStraight, actual_yaw, currentSteering);
