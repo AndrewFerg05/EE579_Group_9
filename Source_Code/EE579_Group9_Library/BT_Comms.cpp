@@ -5,7 +5,7 @@ BluetoothSerial serialBT;
 
 void setupBluetooth() 
 {
-  serialBT.begin("ESP32-BT - 2");
+  serialBT.begin("Test_Andrew");
 
   //Wait For Connection
   while (!serialBT.connected(1000)) 
@@ -13,6 +13,7 @@ void setupBluetooth()
     Serial.println("Waiting to Pair...");
     delay(100);
   }
+  
   // Print a message once connected
   Serial.println("Bluetooth connected!");
  }
@@ -25,12 +26,12 @@ float getBluetoothReading(int n, char measurementType) {
   if (measurementType == 'd') {
     serialBT.print("Enter distance to target ");
     serialBT.print(n);
-    serialBT.println(" in cm. Use exactly 3 integers.");
+    serialBT.println(" in metres.");
   }
   else if (measurementType == 'a') {
     serialBT.print("Enter angle to target ");
     serialBT.print(n);
-    serialBT.println(" in cm. Use exactly 2 integers, plus '-' for negative values.");
+    serialBT.println(". Use -ve for targets to the left.");
   }
 
   while (waitingForReading) 
@@ -132,7 +133,7 @@ int getBluetoothNumberTargets()
                 }
             }
             
-            if (reading > 1 and reading < 4)
+            if (reading > 0 and reading < 4)
             {
                 // Valid Input
                 waitingForReading = false;
