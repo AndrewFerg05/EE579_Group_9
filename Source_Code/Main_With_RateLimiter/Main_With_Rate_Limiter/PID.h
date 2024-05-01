@@ -17,7 +17,7 @@ typedef struct PIDConfig{
     float kd;
     float kp;
     float overflow;
-//    float prevError;
+    float previousError;
     float integral;
 }PIDConfig;
 
@@ -26,7 +26,7 @@ typedef struct PIDConfig{
 extern float setup_flag; 
 
 // Function Definiitions
-//extern void setupPID(PIDConfig*, int, int, int, float);
+extern void setupPID(PIDConfig*, int, int, int, float);
 //extern float PID(PIDConfig*, float, float);
 extern float rateLimiter(int, int, int);
 extern float normalizeAngle180(float);

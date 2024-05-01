@@ -9,15 +9,15 @@ float setup_flag = 0;
 
 
 //// TUNE kp, ki AND kd
-//void setupPID(PIDConfig* steer, int proportionalGain, int integralGain, int derivativeGain, float integralOverflow)
-//{
-//    steer->kp = 0.75;
-//    steer->ki = 0;
-//    steer->kd = 1;
-//    steer->overflow = integralOverflow;
-//    steer->prevError = 0;
-//    steer->integral = 0;
-//}
+void setupPID(PIDConfig* steer, int proportionalGain, int integralGain, int derivativeGain, float integralOverflow)
+{
+    steer->kp = 0.75;
+    steer->ki = 0;
+    steer->kd = 1;
+    steer->overflow = integralOverflow;
+    steer->previousError = 0;
+    steer->integral = 0;
+}
 //
 //float PID(PIDConfig* steer, float setPoint, float currentPoint)
 //{

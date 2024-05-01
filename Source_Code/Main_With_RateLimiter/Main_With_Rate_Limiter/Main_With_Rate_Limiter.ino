@@ -14,7 +14,6 @@
 #define EndProtocol_duration 100000
 #define SystemEnd_duration 120000
 
-
 #define RATELIMITER_INTERVAL 50
 
 //Test Print Variables
@@ -35,8 +34,8 @@ Target Targets[3];
 Target End_Target;
 
 //PID Variables
-//PIDConfig Steer_PID;
-//float control_signal;
+PIDConfig Steer_PID;
+float control_signal;
 
 //State Machine Variables
 enum State
@@ -173,7 +172,7 @@ void setup()
   setupDrive();
   setupIMU();
   setupTimer();
-//  setupPID(&Steer_PID, P_Gain, I_Gain, D_Gain, I_Limit);
+  setupPID(&Steer_PID, P_Gain, I_Gain, D_Gain, I_Limit);
   setupBluetooth();
 }
 
@@ -189,10 +188,10 @@ void loop()
       {
         
         // Stabilise the IMU by running it for some time
-        for(int i = 0; i < 50; i++) {
-          updateYaw();
-          getYaw();
-        }
+//        for(int i = 0; i < 50; i++) {
+//          updateYaw();
+//          getYaw();
+//        }
 
        
         straight_yaw = getYaw(); // set straight yaw: the reference for all other angles
@@ -224,7 +223,7 @@ void loop()
               int readingType = getBluetoothInputType(); // 0 for Target, 1 for Waypoint
               Targets[index].distance = getBluetoothReading(index+1, 'd');
               Targets[index].angleFromStraight = normalizeAngle360(getBluetoothReading(index+1, 'a') + straight_yaw);
-              prevError = Targets[index].angleFromStraight - straight_yaw; // this will help to stabilise the rate limiter. See RateLimiter.cpp    
+//              prevError = Targets[index].angleFromStraight - straight_yaw; // this will help to stabilise the rate limiter. See RateLimiter.cpp    
               if (readingType == 0) { 
                 Targets[index].isWaypoint = false;
               } else {
@@ -232,19 +231,6 @@ void loop()
               }
            }
 
-//            //Non-BlueTooth Definitions            
-//            //Set Target 0
-//            Targets[0].distance = 4;
-//            Targets[0].angleFromStraight = normalizeAngle360(-30 + straight_yaw);
-//            Targets[0].isWaypoint = false;
-//            //Set Target 1
-//            Targets[1].distance = 10;
-//            Targets[1].angleFromStraight = 215 + straight_yaw;
-//            Targets[1].isWaypoint = true;
-//            //Set Target 2 - If condition
-//            Targets[2].distance = 10;
-//            Targets[2].angleFromStraight = 215 + straight_yaw;
-//            Targets[2].isWaypoint = false;
 
             calculateTargets();
             next_state = idle;
