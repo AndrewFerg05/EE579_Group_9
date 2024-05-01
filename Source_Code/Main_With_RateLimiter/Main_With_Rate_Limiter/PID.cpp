@@ -63,11 +63,14 @@ float rateLimiter(int desiredAngle, int currentAngle, int currentSteering)
     error *= -1;
   }
 
-  if (error > 5) {
-    currentSteering += maxRate;
-  } else if (error < -5) {
-    currentSteering -= maxRate;
+  if (currentSteering < error) {
+    currentSteering += 1;
+  } else if (currentSteering > error) {
+    currentSteering -= 1;
   }
+
+
+
 
 //  BTprintfloat(abs(prevError - error));
 //  BTprintfloat(abs(prevError) - abs(error));
@@ -91,23 +94,9 @@ float rateLimiter(int desiredAngle, int currentAngle, int currentSteering)
 
 //  BTprintfloat(error);
 //
-//  if (currentSteering < error) {
-//    currentSteering += 1;
-//  } else if (currentSteering > error) {
-//    currentSteering -= 1;
-//  }
 
-//  if (error < 5 and error > -5) {
-//    currentSteering = 0;
-//  }
 
-  
-//   if (error < -10) {
-//    // i.e. turn left
-//    currentSteering = currentSteering - maxRate;
-//   } else if (error > 10) { // turn right
-//    currentSteering = currentSteering + maxRate;
-//   } 
+
    
    if (currentSteering < -10) {
       currentSteering = -10;
@@ -115,7 +104,7 @@ float rateLimiter(int desiredAngle, int currentAngle, int currentSteering)
       currentSteering = 10;
      }
 
-   BTprintfloat(currentSteering);
+   BTprintfloat(error);
 
    return currentSteering;
 }
