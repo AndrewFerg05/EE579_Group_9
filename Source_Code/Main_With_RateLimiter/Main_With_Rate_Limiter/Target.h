@@ -26,6 +26,7 @@ extern Target End_Target;
 // Navigation Functions
 extern void calculateTimeAndAngle(Target*);
 extern void calculateTargets(void);
+extern void calculateTime(Target*);
 
 // Ultrasound functions
 extern void setupUltrasound(); 

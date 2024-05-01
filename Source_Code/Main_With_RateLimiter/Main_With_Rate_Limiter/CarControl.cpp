@@ -1,5 +1,7 @@
 #include "CarControl.h"
 #include "Target.h"
+#include "BT_Comms.h"
+
 #include <Arduino.h>
 
 
@@ -14,9 +16,9 @@ void setupDrive()
   ledcSetup(0, DRIVE_PWM_FREQ, 8);        // PWM frequency: 10 Hz, PWM resolution: 8-bit (0-255)
   ledcWrite(0, 0);                        // Set PWM duty cycle 
 //  Steer
-  ledcAttachPin(MOTOR_STEER_PIN, 2);      // Attach PWM channel 2 to steering servo pin
-  ledcSetup(2, 50, 10);                   // Configure LEDC channel 2 with a frequency of 50Hz and a resolution of 8 bits
-  ledcWrite(2, 82);                       // Default to Straight     
+  ledcAttachPin(MOTOR_STEER_PIN, 3);      // Attach PWM channel 2 to steering servo pin
+  ledcSetup(3, 50, 10);                   // Configure LEDC channel 2 with a frequency of 50Hz and a resolution of 8 bits
+  ledcWrite(3, 82);                       // Default to Straight     
 }
 
 void forward(int dutyCyclePercentage) 
@@ -48,12 +50,12 @@ void steer(int steering)
         // Map the range from 0 to 20 to the duty cycle range of 82 to 88(maintaining the same value)
         dutycycle = map(steering, 0, 20, 82, 88);
     }
-    ledcWrite(2, dutycycle);
+    ledcWrite(3, dutycycle);
 }
 
 
 void carControl(float angle, float forwardPower, float reversePower, float duration) {
-
+  
   if (duration > 0) {
     steer(angle);
     delay(30);

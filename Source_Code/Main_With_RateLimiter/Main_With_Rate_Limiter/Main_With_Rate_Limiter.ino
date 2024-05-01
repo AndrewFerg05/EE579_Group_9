@@ -15,7 +15,7 @@
 #define SystemEnd_duration 120000
 
 
-#define PID_INTERVAL 50
+#define RATELIMITER_INTERVAL 50
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -29,6 +29,7 @@ bool start_flag = 0;
 bool RateLimiter_Flag = 1;
 int target_select = 0;
 int currentSteering = 0;
+int prevError = 0;
 
 Target Targets[3];
 Target End_Target;
@@ -91,7 +92,7 @@ void IRAM_ATTR Timer0_ISR()
     {
       next_state = drive;
       SlowMode = schedule(Targets[target_select].timeToTarget);
-      PIDUpdate = schedule(PID_INTERVAL);   
+      RateLimiterUpdate = schedule(RATELIMITER_INTERVAL);   
     }
 
   }
@@ -113,7 +114,7 @@ void IRAM_ATTR Timer0_ISR()
 
   if(IsScheduled(TargetMode)) 
   {
-    PIDUpdate.ms = -1;
+    RateLimiterUpdate.ms = -1;
     next_state = target;
     TargetMode.ms = -1;
     //DriveMode = schedule(targetHit_duration);
@@ -127,12 +128,11 @@ void IRAM_ATTR Timer0_ISR()
 //    PIDUpdate = schedule(PID_INTERVAL);                     //Start PID
 //  }
 
-  // ADD IN RUNAWAY
   
   if(IsScheduled(EndProtocol)) 
   {
     next_state = endsequence;
-    PIDUpdate = schedule(PID_INTERVAL); 
+    RateLimiterUpdate = schedule(RATELIMITER_INTERVAL); 
     EndProtocol.ms = -1;
     DriveMode.ms = -1;
     SlowMode.ms = -1;
@@ -147,13 +147,13 @@ void IRAM_ATTR Timer0_ISR()
     DriveMode.ms = -1;
     SlowMode.ms = -1;
     TargetMode.ms = -1;
-    PIDUpdate.ms = -1;
+    RateLimiterUpdate.ms = -1;
   }
 
-    if(IsScheduled(PIDUpdate))
+  if(IsScheduled(RateLimiterUpdate))
   {
-    PID_flag = 1;
-    PIDUpdate = schedule(PID_INTERVAL);
+    RateLimiter_Flag = 1;
+    RateLimiterUpdate = schedule(RATELIMITER_INTERVAL);
   }
 }
 
@@ -187,23 +187,27 @@ void loop()
     {
       case programme:
       {
+        
         // Stabilise the IMU by running it for some time
         for(int i = 0; i < 50; i++) {
           updateYaw();
           getYaw();
         }
-        
+
+       
         straight_yaw = getYaw(); // set straight yaw: the reference for all other angles
         
         if(programme_ready_flag == 1)
         {
+            
             // Wiggle wheels to indicate car is ready
-            carControl(0, 0, 0, 500);
-            carControl(20, 0, 0, 500); // steer, forward power, reverse power, time
-            carControl(-20, 0, 0, 500);
-            carControl(0, 0, 0, 500);
             
-            
+            carControl(0, 0, 0, 0.5);
+            carControl(20, 0, 0, 0.5); // steer, forward power, reverse power, time
+            carControl(-20, 0, 0, 0.5);
+            carControl(0, 0, 0, 0.5);
+
+    
             //Default parameters of targets
             //{Ditance, anglefromstraight, timeToTarget, angleToTarget, isWaypoint}
             Targets[0] = (Target){10.0, straight_yaw, 0, 0.0, false};
@@ -211,20 +215,21 @@ void loop()
             Targets[2] = (Target){10.0, straight_yaw, 0, 0.0, true};
             End_Target = (Target){20.0, straight_yaw, 120000, straight_yaw, true};
 
-
+            
             // Get actual target details from user
             int numberTargets = getBluetoothNumberTargets();
             
             for(int index = 0; index < numberTargets; index++) 
             {
               int readingType = getBluetoothInputType(); // 0 for Target, 1 for Waypoint
-              if (readingType == 0) { Targets[index].isWaypoint = false;} else {Targets[index].isWaypoint = true;}
               Targets[index].distance = getBluetoothReading(index+1, 'd');
               Targets[index].angleFromStraight = normalizeAngle360(getBluetoothReading(index+1, 'a') + straight_yaw);
               prevError = Targets[index].angleFromStraight - straight_yaw; // this will help to stabilise the rate limiter. See RateLimiter.cpp    
-              if (readingType == 0) { Targets[index].isWaypoint = false;} else {Targets[index].isWaypoint = true;}
-              
-              Serial.println(Targets[index].isWaypoint);
+              if (readingType == 0) { 
+                Targets[index].isWaypoint = false;
+              } else {
+                Targets[index].isWaypoint = true;
+              }
            }
 
 //            //Non-BlueTooth Definitions            
@@ -243,6 +248,7 @@ void loop()
 
             calculateTargets();
             next_state = idle;
+            
             Serial.print("PROGRAMME READY");
             Serial.println();
         }
@@ -259,23 +265,21 @@ void loop()
 
       case idle:
       {
-
+        
         //Wait for BT start signal
         forward(0);
         reverse(0);
         steer(0);
-        start_flag = getBluetoothFlag();
-//        start_flag = 1;
         
+        start_flag = getBluetoothFlag();
+
         if(start_flag == 1)
         {
           EndProtocol = schedule(EndProtocol_duration);   //Drive away with 20s to go
           IdleMode = schedule(SystemEnd_duration);      //Return to idle at end
-          Serial.print("IDLE SYS READY");
-          Serial.println();
           SlowMode = schedule(Targets[target_select].timeToTarget);
           next_state = drive;
-          RateLimiterUpdate = schedule(PID_INTERVAL);
+          RateLimiterUpdate = schedule(RATELIMITER_INTERVAL);
           start_flag = 0;
         }
 
@@ -293,24 +297,14 @@ void loop()
       {
         reverse(0);
         actual_yaw= getYaw();
-        if( PID_flag == 1)
+        
+        if( RateLimiter_Flag == 1)
         {
-
           currentSteering = rateLimiter(Targets[target_select].angleFromStraight, actual_yaw, currentSteering);
           steer(currentSteering);
           forward(100); 
-          PID_flag = 0;
+          RateLimiter_Flag = 0;
           BTprintfloat(currentSteering);
-          if (collisionTest) {
-            forward(0);
-            
-            BTprintfloat(-1);
-            while(1) {
-              delay(1000);
-            }
-          }
-          
-          Serial.println(currentSteering);
           
         }
         
@@ -347,16 +341,16 @@ void loop()
         strikeCanCloseDistance();
        
         next_state = stabilize_IMU;
+        DriveMode = schedule(500);
         
         break;
       }
 
       case stabilize_IMU:
       {
-        actual_yaw= getYaw();
-        //closestTarget.angleToTarget = normalizeAngle360(closestTarget.angleToTarget + actual_yaw);              //Calculate absolute angle to can
-        //calculateTimeAndAngle(&closestTarget);                  //Calculate params 
-          if (millis() - lastPrint > PRINT_SPEED) 
+        actual_yaw= getYaw();  
+        
+        if (millis() - lastPrint > PRINT_SPEED) 
         {
           Serial.print("Stabilize_IMU");
           Serial.println();
@@ -369,12 +363,20 @@ void loop()
       case endsequence:
       {
         actual_yaw= getYaw();
-        if( PID_flag == 1)
+        if( RateLimiter_Flag == 1)
         {
-//          control_signal = PID(&Steer_PID, End_Target.angleToTarget, actual_yaw);
-//          carControl(control_signal);
-         
-          PID_flag = 0;
+          currentSteering = rateLimiter(Targets[target_select].angleFromStraight, actual_yaw, currentSteering);
+          steer(currentSteering);
+          forward(100); 
+          RateLimiter_Flag = 0;
+          BTprintfloat(currentSteering);
+          if (collisionTest) {
+            forward(0);
+            
+            BTprintfloat(-1);
+            while(1) {
+              delay(1000);
+            }
         }
 
         if (millis() - lastPrint > PRINT_SPEED) 
@@ -388,5 +390,5 @@ void loop()
     }
 
     current_state = next_state;
-  
+    }
 }

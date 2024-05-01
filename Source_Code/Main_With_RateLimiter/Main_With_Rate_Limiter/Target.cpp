@@ -8,6 +8,11 @@ void calculateTimeAndAngle(Target* target)
     target->angleToTarget = normalizeTargetAngle(target->angleFromStraight);   // Calculate the angle relative to the car's current position    
 }
 
+
+void calculateTime(Target* target) {
+  target->timeToTarget = (int)(((target->distance / car_speed) * 1000) - time_offset);   // Caculate how long it will take to reach the target
+}
+
 void calculateTargets()
 {
     for (int i = 0; i < 3; i++) 
@@ -75,7 +80,7 @@ Target scanForTargets_Ultrasound()
 
     // DEFAULT VALUES
     Target closestTarget; 
-    float distanceReadings[90]; // 0 = most right, 89 = most left
+    float distanceReadings[91]; // 0 = most right, 90 = most left
 
     
     // BEGIN SCAN (max 5)
@@ -87,7 +92,6 @@ Target scanForTargets_Ultrasound()
         {
             turnServo(i*2);
             distanceReadings[i] = 0.01723 * sendUltrasoundPing();
-//          Serial.println(distanceReadings[i]);
         }
 
         // PROCESS SCAN TO FIND CLOSEST VALID OBJECT
@@ -174,8 +178,6 @@ Target scanForTargets_Ultrasound()
 
             double furthestDistance_inLimits = distanceReadings[targetAngle];
             double closestDistance_inLimits = distanceReadings[targetAngle];
-
-            
             
             for (int i = rightmostAngle; i <= leftmostAngle; i++)
             {
@@ -213,11 +215,10 @@ Target scanForTargets_Ultrasound()
            
           double objectGradient = (angleRange * sum_xy - sum_x * sum_y) / (angleRange * sum_x_squared - sum_x * sum_x);
 
-          
-
+        
             
-          // Decide if there is a valid o=can
-            if (angleRange <= 10)
+          // Decide if there is a valid can
+            if (angleRange <= 5)
             {
                 Serial.println("False Reading: Angle range was too small");
                 lowerBoundary = distanceReadings[targetAngle];
