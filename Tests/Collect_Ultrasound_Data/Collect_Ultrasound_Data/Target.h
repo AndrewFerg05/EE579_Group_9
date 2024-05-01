@@ -1,6 +1,8 @@
 #ifndef TARGET_H_
 #define TARGET_H_
 
+#include "BT_Comms.h"
+
 //Tuneable Parameters
 #define car_speed 1.2       //m/s
 #define time_offset 1000    //Time subtracted so it stops before target

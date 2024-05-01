@@ -4,9 +4,7 @@
 #define triggerPin 4 
 #define echoPin 2 
 #define servoPin 16 
-#define STEADY_SPEED 1.2
-#define ACCELERATION_TIME 0.25
-
+#define STEADY_SPEED 1.00
 
 void calculateTimeAndAngle(Target* target)
 {
@@ -91,7 +89,8 @@ Target scanForTargets_Ultrasound()
         {
             turnServo(i*2);
             distanceReadings[i] = 0.01723 * sendUltrasoundPing();
-//            Serial.println(distanceReadings[i]);
+            
+            Serial.println(distanceReadings[i]);
         }
 
         // PROCESS SCAN TO FIND CLOSEST VALID OBJECT
@@ -251,7 +250,7 @@ Target scanForTargets_Ultrasound()
 
             Serial.println("");
             
-            if (m > 0.15 or m < -0.15) {
+            if (m > 0.3 or m < -0.3) {
 //              Serial.println("Gradient indicates this is not a can");
 
               Serial.print("Target at angle: ");
@@ -274,21 +273,8 @@ Target scanForTargets_Ultrasound()
 
               lowerBoundary = distanceReadings[targetAngle];
               
-            } 
-//            else if (objectDepth < 2 or objectDepth > 10) {
-//              Serial.println("Depth indicates this is not a can.");
-//
-//              Serial.print("Target at angle: ");
-//              Serial.print(rightmostAngle);
-//              Serial.print(" to ");
-//              Serial.print(leftmostAngle);
-//              Serial.print(" was rejected because it's depth  was ");
-//              Serial.println(objectDepth);
-//
-//              
-//              lowerBoundary = distanceReadings[targetAngle];
-//            }
-            else {
+            } else
+            {
                 // CAN DETECTED
 
                 Serial.print("Target at angle: ");
@@ -307,7 +293,7 @@ Target scanForTargets_Ultrasound()
                 turnServo(targetAngle * 2); 
  
                // update variables
-               closestTarget.distance = mean / 100;
+               closestTarget.distance = mean;
                closestTarget.angleToTarget = -1*(targetAngle*2 - 90); // map range from 0 -> 180 (in steps of two) to 90 -> -90
                processingComplete = true;
                return closestTarget;
@@ -355,10 +341,10 @@ void strikeCanCloseDistance() {
             carControl(0, 100, 0, 0.5); // strike the can
             rescan = false; // move on to next target
             
-          } else if (closestTarget.angleToTarget > -10 and closestTarget.angleToTarget < 10 and closestTarget.distance >= 0.25) {
+          } else if (closestTarget.angleToTarget > -10 and closestTarget.angleToTarget < 10 and closestTarget.distance > 0.25) {
             // CAR ALIGNED BUT FAR
-            driveTime =  ACCELERATION_TIME + (closestTarget.distance - 0.25) / STEADY_SPEED; // aim to stop a little bit before tha can
-            carControl(0, 100, 0, driveTime); // Drive straight up to the can
+            driveTime =  (closestTarget.distance - 0.2) / STEADY_SPEED; // aim to stop a little bit before tha can
+            carControl(0, 75, 0, driveTime); // Drive straight up to the can
 
           } else if ((closestTarget.angleToTarget > 70 or closestTarget.angleToTarget < -70) and closestTarget.distance < 0.25) {
             // CAN TOO STEEP AN ANGLE TO HIT
@@ -366,34 +352,34 @@ void strikeCanCloseDistance() {
             
           } else if (closestTarget.angleToTarget > 70 and closestTarget.distance >= 0.25) {
             // CAN IS STEEP AND FAR. GO FORWARD RIGHT AND REVERSE LEFT TO LINE UP
-            carControl(20, 75, 0, 0.5);
-            carControl(-20, 0, 75, 0.5);
+            carControl(20, 100, 0, 0.5);
+            carControl(-20, 0, 100, 0.5);
             
           } else if (closestTarget.angleToTarget < -70 and closestTarget.distance >= 0.25) {
             // CAN IS STEEP AND FAR. GO FORWARD LEFT AND REVERSE RIGHT TO LINE UP
-            carControl(-20, 75, 0, 0.5);
-            carControl(20, 0, 75, 0.5);
+            carControl(-20, 100, 0, 0.5);
+            carControl(20, 0, 100, 0.5);
             
           } else if (closestTarget.distance < 0.25 and closestTarget.angleToTarget < 0) {
             // REVERSE IN THE OPPOSITE DIRECTION SLIGHTLY
-            carControl(20, 0, 75, 0.5);
+            carControl(20, 0, 100, 0.3);
             
           } else if (closestTarget.distance < 0.25 and closestTarget.angleToTarget > 0) {
             // REVERSE IN THE OPPOSITE DIRECTION SLIGHTLY
-            carControl(-20, 0, 75, 0.5);
+            carControl(-20, 0, 100, 0.3);
             
           } else if (closestTarget.angleToTarget > 0) {
             // CAN IF FAR AND TO THE RIGHT
-            driveTime = (closestTarget.angleToTarget / 90) * 0.9; // it takes 0.9 seconds to turn 90 degrees 
+            driveTime = (closestTarget.angleToTarget / 90) * 1.2; // it takes 1.2 seconds to turn 90 degrees TUNE!
             carControl(20, 75, 0, driveTime);
-            driveTime = ACCELERATION_TIME + ((closestTarget.distance - 0.25) / STEADY_SPEED ) - driveTime; // drive straight for the remaiunder
-            carControl(0, 100, 0, driveTime);
+            driveTime = ((closestTarget.distance - 0.2) / STEADY_SPEED ) - driveTime; // drive straight for the remaiunder
+            carControl(0, 75, 0, driveTime);
             
           } else if (closestTarget.angleToTarget < 0) {
             // CAN IF FAR AND TO THE LEFT            
-            driveTime = (-1* closestTarget.angleToTarget / 90) * 0.9; // it takes 1.2 seconds to turn 90 degrees TUNE!
+            driveTime = (-1* closestTarget.angleToTarget / 90) * 1.2; // it takes 1.2 seconds to turn 90 degrees TUNE!
             carControl(-20, 75, 0, driveTime);
-            driveTime = ACCELERATION_TIME + ((closestTarget.distance - 0.2) / STEADY_SPEED ) - driveTime; // drive straight for the remaiunder
+            driveTime = ((closestTarget.distance - 0.2) / STEADY_SPEED ) - driveTime; // drive straight for the remaiunder
           }
         }
 }

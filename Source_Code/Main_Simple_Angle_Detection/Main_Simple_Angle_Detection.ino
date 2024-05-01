@@ -20,7 +20,7 @@
 #define MOTOR_STEER_PIN 17
 #define DRIVE_PWM_FREQ 10
 #define STEER_PWM_FREQ 50
-#define PID_INTERVAL 5            //Change to set duration in ms between PID updates
+#define PID_INTERVAL 100            //Change to set duration in ms between PID updates
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -34,6 +34,7 @@ bool start_flag = 0;
 bool PID_flag = 1;
 int target_select = 0;
 int target_counter = 0;
+bool carTurning = true;
 Target Targets[3];
 Target End_Target;
 Target closestTarget;
@@ -274,6 +275,15 @@ void carControl(float control_signal)
   
 }
 
+void carControl2(float control_signal)
+{
+  
+  steer(control_signal);
+  
+  forward(100);
+  
+}
+
 
 //Main
 void setup()
@@ -283,7 +293,7 @@ void setup()
   setupIMU();
   setupTimer();
   setupPID(&Steer_PID, P_Gain, I_Gain, D_Gain, I_Limit);
-  setupBluetooth();
+//  setupBluetooth();
 }
 
 
@@ -318,43 +328,43 @@ void loop()
 
 
             //BlueTooth Definition
-            int numberTargets = getBluetoothNumberTargets();
-            
-            for(int index = 0; index < numberTargets; index++) 
-            {
-              int readingType = getBluetoothInputType(); // 0 for Target, 1 for Waypoint
-              Targets[index].distance = getBluetoothReading(index+1, 'd') / 100;
-              Serial.println("Distance: ");
-              Serial.print(Targets[index].distance);
-              Targets[index].angleFromStraight = normalizeAngle360(getBluetoothReading(index+1, 'a') + straight_yaw);
-              Serial.println("Angle: ");
-              Serial.print(Targets[index].angleFromStraight);
-              
-              if (readingType == 0) 
-              {
-                Targets[index].isWaypoint = false;
-              } 
-              else 
-              {
-                Targets[index].isWaypoint = true;
-              }
-              
-              Serial.println(Targets[index].isWaypoint);
-           }
+//            int numberTargets = getBluetoothNumberTargets();
+//            
+//            for(int index = 0; index < numberTargets; index++) 
+//            {
+//              int readingType = getBluetoothInputType(); // 0 for Target, 1 for Waypoint
+//              Targets[index].distance = getBluetoothReading(index+1, 'd') / 100;
+//              Serial.println("Distance: ");
+//              Serial.print(Targets[index].distance);
+//              Targets[index].angleFromStraight = normalizeAngle360(getBluetoothReading(index+1, 'a') + straight_yaw);
+//              Serial.println("Angle: ");
+//              Serial.print(Targets[index].angleFromStraight);
+//              
+//              if (readingType == 0) 
+//              {
+//                Targets[index].isWaypoint = false;
+//              } 
+//              else 
+//              {
+//                Targets[index].isWaypoint = true;
+//              }
+//              
+//              Serial.println(Targets[index].isWaypoint);
+//           }
 
-////          //Non-BlueTooth Definitions            
+//            //Non-BlueTooth Definitions            
 //            //Set Target 0
-//            Targets[0].distance = 1;
-//            Targets[0].angleFromStraight = 215 + straight_yaw;
-//            Targets[0].isWaypoint = false;
+              Targets[0].distance = 10;
+              Targets[0].angleFromStraight = normalizeAngle360(30 + straight_yaw);
+              Targets[0].isWaypoint = false;
 //            //Set Target 1
-//            Targets[1].distance = 10;
-//            Targets[1].angleFromStraight = 215 + straight_yaw;
-//            Targets[1].isWaypoint = true;
-//            //Set Target 2 - If condition
-//            Targets[2].distance = 10;
-//            Targets[2].angleFromStraight = 215 + straight_yaw;
-//            Targets[2].isWaypoint = false;
+              Targets[1].distance = 10;
+              Targets[1].angleFromStraight = 215 + straight_yaw;
+              Targets[1].isWaypoint = true;
+              //Set Target 2 - If condition
+              Targets[2].distance = 10;
+              Targets[2].angleFromStraight = 215 + straight_yaw;
+              Targets[2].isWaypoint = false;
 
             calculateTargets();
             next_state = idle;
@@ -378,8 +388,8 @@ void loop()
         reverse(0);
         steer(0);
         //Wait for BT start signal
-        start_flag = getBluetoothFlag();
-//        start_flag = 1;
+        start_flag = 1;
+//        start_flag = getBluetoothFlag();
         
         if(start_flag == 1)
         {
@@ -410,37 +420,35 @@ void loop()
         reverse(0);
         actual_yaw= getYaw();
 
-        if(target_select == 0)
+        if( PID_flag == 1)
         {
-          forward(100);
-          steer(-1);
-        
-        if (millis() - lastPrint > PRINT_SPEED) 
-        {
-          //Serial.print(actual_yaw);
-          Serial.print("DRIVE STRAIGHT");
-          Serial.println();
-          lastPrint = millis(); // Update lastPrint time
+//          Serial.println(actual_yaw);
+          if (carTurning) {
+            int error = Targets[0].angleFromStraight - actual_yaw; // if error is +ve turn right, left if -ve
+            Serial.println(error);
+            if (error < -3) {
+              carControl2(-20);
+            } else if (error > 3) {
+              carControl2(20);
+            } else {
+              carTurning = false;
+            }
+        } else {
+          carControl2(0);
+          Serial.println("Straight");
         }
-        
-        }
-        else
-        {
+                   
           
-          if( PID_flag == 1)
-          {
-          control_signal = PID(&Steer_PID, Targets[target_select].angleToTarget, actual_yaw);
-          carControl(control_signal);          
           PID_flag = 0;
+        }
+        
         
         if (millis() - lastPrint > PRINT_SPEED) 
         {
           //Serial.print(actual_yaw);
-          Serial.print("DRIVE PID");
-          Serial.println();
+//          Serial.print("DRIVE PID");
+//          Serial.println();
           lastPrint = millis(); // Update lastPrint time
-        }
-          }          
         }
 
                   

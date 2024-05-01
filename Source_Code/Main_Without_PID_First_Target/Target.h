@@ -2,7 +2,7 @@
 #define TARGET_H_
 
 //Tuneable Parameters
-#define car_speed 1.2       //m/s
+#define car_speed 1.25       //m/s
 #define time_offset 1000    //Time subtracted so it stops before target
 #define angle_offset 0 
 
@@ -33,10 +33,4 @@ extern double sendUltrasoundPing();
 extern Target scanForTargets_Ultrasound(); // scans 180 deg, then returns closest target
 extern void turnServo(); // controls servo direction
 float normalizeTargetAngle(float);
-void strikeCanCloseDistance();
-void carControl(float, float, float, float);
-void steer(int);
-void forward(int);
-void reverse(int);
-void turnServo(int);
 #endif

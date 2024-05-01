@@ -1,12 +1,11 @@
 #include "Target.h"
 #include <Arduino.h>
 
+
 #define triggerPin 4 
 #define echoPin 2 
 #define servoPin 16 
-#define STEADY_SPEED 1.2
-#define ACCELERATION_TIME 0.25
-
+#define STEADY_SPEED 1.00
 
 void calculateTimeAndAngle(Target* target)
 {
@@ -30,7 +29,7 @@ double sendUltrasoundPing()
 
     // Send 5 us ping
     digitalWrite(triggerPin, HIGH);
-    delayMicroseconds(20);
+    delayMicroseconds(10);
     digitalWrite(triggerPin, LOW);
 
     long startTime = micros(); // start the timer
@@ -38,16 +37,16 @@ double sendUltrasoundPing()
     // Wait for pulse to return
     while (digitalRead(echoPin) == LOW) {
       long tempReading = micros();
-      if (tempReading - startTime > 50000) {
-        return 50000;
+      if (tempReading - startTime > 30000) {
+        return 30000;
       }
     };
     startTime = micros(); // update the start time now that the pulse has started
 
     while (digitalRead(echoPin) == HIGH) {
       long tempReading = micros();
-      if (tempReading - startTime > 50000) {
-        return 50000;
+      if (tempReading - startTime > 30000) {
+        return 30000;
       }
     }
     double travelTime = micros() - startTime;
@@ -79,7 +78,7 @@ Target scanForTargets_Ultrasound()
 
     // DEFAULT VALUES
     Target closestTarget; // default values
-    float distanceReadings[91]; // 0 = most right, 89 = most left
+    float distanceReadings[90]; // 0 = most right, 89 = most left
 
     
     // BEGIN SCAN (max 5)
@@ -87,7 +86,7 @@ Target scanForTargets_Ultrasound()
 
     {
         // TAKE 90 READINGS, one every second degree
-        for (int i = 0; i <= 90; i++)
+        for (int i = 0; i < 90; i++)
         {
             turnServo(i*2);
             distanceReadings[i] = 0.01723 * sendUltrasoundPing();
@@ -97,11 +96,9 @@ Target scanForTargets_Ultrasound()
         // PROCESS SCAN TO FIND CLOSEST VALID OBJECT
         double lowerBoundary = -1;
         bool processingComplete = false;
-        int numberOfMoves = 0;
-        
-        while (!processingComplete and numberOfMoves <= 10)
+        while (!processingComplete)
         {
-           numberOfMoves++;
+           
             // Smooth the readings
             for (int i = 1; i < 90; i++) {
               if ((distanceReadings[i-1] - distanceReadings[i] < -10 or distanceReadings[i-1] - distanceReadings[i] > 10) and (distanceReadings[i+1] - distanceReadings[i] < -10 or distanceReadings[i+1] - distanceReadings[i] > 10)) {
@@ -112,7 +109,7 @@ Target scanForTargets_Ultrasound()
             // Find the smallest distance in the array (which is greater than the lower boundary)
             int targetAngle = -1;
             
-            for (int i = 0; i <= 90; i++)
+            for (int i = 0; i < 90; i++)
             {
                 if (targetAngle == -1) {
                   if (distanceReadings[i] > lowerBoundary) {
@@ -128,9 +125,9 @@ Target scanForTargets_Ultrasound()
             }
 
             // Print the readings 
-//            for (int i = 0; i < 90; i++) {
-//              Serial.println(distanceReadings[i]);
-//            }
+            for (int i = 0; i < 90; i++) {
+              Serial.println(distanceReadings[i]);
+            }
 
             if (targetAngle == -1)
             {
@@ -140,20 +137,20 @@ Target scanForTargets_Ultrasound()
 
             // Find the maximum distance  within a tolerance of 5cm
             int leftmostAngle = targetAngle;
-            for (int i = targetAngle + 1; i <= 90; i++)
+            for (int i = targetAngle + 1; i < 90; i++)
             {
                 double difference = distanceReadings[i] - distanceReadings[i - 1];
                 if (difference < 0)
                 {
                     difference = difference * -1;
                 }
-                if (difference >= 10)
+                if (difference >= 5)
                 {
                     leftmostAngle = i - 1;
                     break;
                 }
-                if (i == 90){
-                  leftmostAngle = 90;
+                if (i == 89){
+                  leftmostAngle = 89;
                 }
             }
 
@@ -167,7 +164,7 @@ Target scanForTargets_Ultrasound()
                     difference = difference * -1;
                 }
 
-                if (difference >= 10)
+                if (difference >= 5)
                 {
                     rightmostAngle = i + 1;
                     break;
@@ -192,122 +189,53 @@ Target scanForTargets_Ultrasound()
                 }
             }
 
-            // calcaulate the object's depth and range
+
+//            double objectLength = (distanceReadings[leftmostAngle]+distanceReadings[rightmostAngle])/2 * sin((3.1415/180*(leftmostAngle - rightmostAngle))/2);
+//            double minLength = distanceReadings[targetAngle]*0.35+ 1;
+//            double maxLength = distanceReadings[targetAngle]*0.7+3;
+
             double objectDepth = furthestDistance_inLimits - closestDistance_inLimits;
-            int angleRange = leftmostAngle - rightmostAngle + 1;
+            targetAngle = round((leftmostAngle + rightmostAngle) / 2);
+
+            Serial.print("Target Angle: ");
+            Serial.println(targetAngle*2);
+            Serial.print("Distance Range: ");
+            Serial.println(distanceReadings[targetAngle]);
+            Serial.println("Target Depth: ");
+            Serial.print(objectDepth);
+            Serial.println("Angle Range: ");
+            Serial.print(leftmostAngle - rightmostAngle);
             
-            // calculate the objects variance
-            double sum = 0.0;
-            for (int i = rightmostAngle; i <= leftmostAngle; i++)
+
+            if (leftmostAngle - rightmostAngle <= 2)
             {
-                sum += distanceReadings[i];
+                Serial.println("False Reading: Angle range was too small");
+                lowerBoundary = furthestDistance_inLimits;
             }
-            double mean = sum / angleRange;
-//            
-//            double variance = 0.0;
-//            for (int i = rightmostAngle; i <= leftmostAngle; ++i) {
-//                variance += (distanceReadings[i] - mean) * (distanceReadings[i] - mean);
-//            }
-//            variance /= angleRange;
-            
-            // calcualte the objects line of best fit
-            double sum_x = 0, sum_y = 0, sum_xy = 0, sum_x_squared= 0;
-
-            for (int i = rightmostAngle; i <= leftmostAngle; ++i) {
-                sum_x += i;
-                sum_y += distanceReadings[i];
-                sum_xy += i * distanceReadings[i];
-                sum_x_squared += i * i;
+            else if (leftmostAngle - rightmostAngle >= 80)
+            {
+                Serial.println("False Reading: Angle range was too big: ");
+                lowerBoundary = furthestDistance_inLimits;
             }
-        
-
-            double m = (angleRange * sum_xy - sum_x * sum_y) / (angleRange * sum_x_squared - sum_x * sum_x);
+            else if (furthestDistance_inLimits - closestDistance_inLimits >= 5)
+            {
+                Serial.println("False Reading: Depth  was too big. ");
+                lowerBoundary = furthestDistance_inLimits;
+            }
+            else if (furthestDistance_inLimits - closestDistance_inLimits <= 1)
+            {
+                Serial.println("False Reading: distance range was too small. ");
+                lowerBoundary = furthestDistance_inLimits;
+            }
             
-//            double width = sin((angleRange/2)*3.1415/180)*mean*2;
-//            
-//            Serial.println("");
-//            Serial.print("Target: ");
-//            Serial.print(rightmostAngle);
-//            Serial.print(" to ");
-//            Serial.println(leftmostAngle);
-//            Serial.print("Mean Distance: ");
-//            Serial.println(mean);
-//            Serial.print("Target Depth: ");
-//            Serial.println(objectDepth);
-//            Serial.print("Angle Range: ");
-//            Serial.println(angleRange);
-////            Serial.print("Variace: ");
-////            Serial.println(variance);
-//            Serial.print("Gradient: ");
-//            Serial.println(m);
-////            Serial.print("Width: ");
-////            Serial.println(width);
-
-
-            // The best indidcators of can are 
-              // 1) Gradient
-              // 2) Angle Range
-              // 3) Depth
-
-            Serial.println("");
-            
-            if (m > 0.15 or m < -0.15) {
-//              Serial.println("Gradient indicates this is not a can");
-
-              Serial.print("Target at angle: ");
-              Serial.print(rightmostAngle);
-              Serial.print(" to ");
-              Serial.print(leftmostAngle);
-              Serial.print(" was rejected because it's gradient was ");
-              Serial.println(m);
-              
-              lowerBoundary = distanceReadings[targetAngle];
-            } else if (angleRange <= 5) {
-              Serial.println("Small angle range indicates this is not a can.");
-
-              Serial.print("Target at angle: ");
-              Serial.print(rightmostAngle);
-              Serial.print(" to ");
-              Serial.print(leftmostAngle);
-              Serial.print(" was rejected because it's angle range was ");
-              Serial.println(angleRange);
-
-              lowerBoundary = distanceReadings[targetAngle];
-              
-            } 
-//            else if (objectDepth < 2 or objectDepth > 10) {
-//              Serial.println("Depth indicates this is not a can.");
-//
-//              Serial.print("Target at angle: ");
-//              Serial.print(rightmostAngle);
-//              Serial.print(" to ");
-//              Serial.print(leftmostAngle);
-//              Serial.print(" was rejected because it's depth  was ");
-//              Serial.println(objectDepth);
-//
-//              
-//              lowerBoundary = distanceReadings[targetAngle];
-//            }
-            else {
+            else
+            {
                 // CAN DETECTED
-
-                Serial.print("Target at angle: ");
-                Serial.print(rightmostAngle);
-                Serial.print(" to ");
-                Serial.print(leftmostAngle);
-                Serial.print(" was accepted with gradient, depth and angle:");
-                Serial.println(m);
-                Serial.println(objectDepth);
-                Serial.println(angleRange);
-
-              
                 // Turn servo to face can
-                targetAngle = round((leftmostAngle + rightmostAngle) / 2);   
-             
-                turnServo(targetAngle * 2); 
- 
+                turnServo(targetAngle * 2);    
+
                // update variables
-               closestTarget.distance = mean / 100;
+               closestTarget.distance = distanceReadings[static_cast<int>(targetAngle*2)] / 100;
                closestTarget.angleToTarget = -1*(targetAngle*2 - 90); // map range from 0 -> 180 (in steps of two) to 90 -> -90
                processingComplete = true;
                return closestTarget;
@@ -355,10 +283,10 @@ void strikeCanCloseDistance() {
             carControl(0, 100, 0, 0.5); // strike the can
             rescan = false; // move on to next target
             
-          } else if (closestTarget.angleToTarget > -10 and closestTarget.angleToTarget < 10 and closestTarget.distance >= 0.25) {
+          } else if (closestTarget.angleToTarget > -10 and closestTarget.angleToTarget < 10 and closestTarget.distance > 0.25) {
             // CAR ALIGNED BUT FAR
-            driveTime =  ACCELERATION_TIME + (closestTarget.distance - 0.25) / STEADY_SPEED; // aim to stop a little bit before tha can
-            carControl(0, 100, 0, driveTime); // Drive straight up to the can
+            driveTime =  (closestTarget.distance - 0.2) / STEADY_SPEED; // aim to stop a little bit before tha can
+            carControl(0, 75, 0, driveTime); // Drive straight up to the can
 
           } else if ((closestTarget.angleToTarget > 70 or closestTarget.angleToTarget < -70) and closestTarget.distance < 0.25) {
             // CAN TOO STEEP AN ANGLE TO HIT
@@ -366,34 +294,34 @@ void strikeCanCloseDistance() {
             
           } else if (closestTarget.angleToTarget > 70 and closestTarget.distance >= 0.25) {
             // CAN IS STEEP AND FAR. GO FORWARD RIGHT AND REVERSE LEFT TO LINE UP
-            carControl(20, 75, 0, 0.5);
-            carControl(-20, 0, 75, 0.5);
+            carControl(20, 100, 0, 0.5);
+            carControl(-20, 0, 100, 0.5);
             
           } else if (closestTarget.angleToTarget < -70 and closestTarget.distance >= 0.25) {
             // CAN IS STEEP AND FAR. GO FORWARD LEFT AND REVERSE RIGHT TO LINE UP
-            carControl(-20, 75, 0, 0.5);
-            carControl(20, 0, 75, 0.5);
+            carControl(-20, 100, 0, 0.5);
+            carControl(20, 0, 100, 0.5);
             
           } else if (closestTarget.distance < 0.25 and closestTarget.angleToTarget < 0) {
             // REVERSE IN THE OPPOSITE DIRECTION SLIGHTLY
-            carControl(20, 0, 75, 0.5);
+            carControl(20, 0, 100, 0.3);
             
           } else if (closestTarget.distance < 0.25 and closestTarget.angleToTarget > 0) {
             // REVERSE IN THE OPPOSITE DIRECTION SLIGHTLY
-            carControl(-20, 0, 75, 0.5);
+            carControl(-20, 0, 100, 0.3);
             
           } else if (closestTarget.angleToTarget > 0) {
             // CAN IF FAR AND TO THE RIGHT
-            driveTime = (closestTarget.angleToTarget / 90) * 0.9; // it takes 0.9 seconds to turn 90 degrees 
+            driveTime = (closestTarget.angleToTarget / 90) * 1.2; // it takes 1.2 seconds to turn 90 degrees TUNE!
             carControl(20, 75, 0, driveTime);
-            driveTime = ACCELERATION_TIME + ((closestTarget.distance - 0.25) / STEADY_SPEED ) - driveTime; // drive straight for the remaiunder
-            carControl(0, 100, 0, driveTime);
+            driveTime = ((closestTarget.distance - 0.2) / STEADY_SPEED ) - driveTime; // drive straight for the remaiunder
+            carControl(0, 75, 0, driveTime);
             
           } else if (closestTarget.angleToTarget < 0) {
             // CAN IF FAR AND TO THE LEFT            
-            driveTime = (-1* closestTarget.angleToTarget / 90) * 0.9; // it takes 1.2 seconds to turn 90 degrees TUNE!
+            driveTime = (-1* closestTarget.angleToTarget / 90) * 1.2; // it takes 1.2 seconds to turn 90 degrees TUNE!
             carControl(-20, 75, 0, driveTime);
-            driveTime = ACCELERATION_TIME + ((closestTarget.distance - 0.2) / STEADY_SPEED ) - driveTime; // drive straight for the remaiunder
+            driveTime = ((closestTarget.distance - 0.2) / STEADY_SPEED ) - driveTime; // drive straight for the remaiunder
           }
         }
 }
@@ -444,6 +372,6 @@ void steer(int steering)
         // Map the range from 0 to 20 to the duty cycle range of 82 to 88(maintaining the same value)
         dutycycle = map(steering, 0, 20, 82, 88);
     }
-    ledcWrite(3, dutycycle);
+    ledcWrite(2, dutycycle);
 }
   

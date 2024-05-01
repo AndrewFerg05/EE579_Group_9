@@ -1,14 +1,11 @@
-// Drives in a straight line untill target area 1
-//Scans for can and then moves in that direction slowly
-//Scans and moves up to 10x whilst can detected or until can is in front of car
-//Attempts to hit and then moves on to next target with PID 
+// Should drive to target area and scan once
+// If can detected attempts to hit before moving onto next target
 
 #include "IMU.h"
 #include "Scheduler.h"
 #include "Target.h"
 #include "PID.h"
 #include "BT_Comms.h"
-
 
 #define slow_duration 500
 #define targetHit_duration 10000
@@ -20,7 +17,8 @@
 #define MOTOR_STEER_PIN 17
 #define DRIVE_PWM_FREQ 10
 #define STEER_PWM_FREQ 50
-#define PID_INTERVAL 5            //Change to set duration in ms between PID updates
+#define PID_INTERVAL 50
+
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -33,15 +31,14 @@ bool programme_ready_flag = 0;
 bool start_flag = 0;
 bool PID_flag = 1;
 int target_select = 0;
-int target_counter = 0;
+int currentSteering = 0;
+
 Target Targets[3];
 Target End_Target;
-Target closestTarget;
 
 //PID Variables
 PIDConfig Steer_PID;
 float control_signal;
-
 
 //State Machine Variables
 enum State
@@ -52,7 +49,7 @@ enum State
     slow,           //slowing down when nearer target
     target,         //sensing
     stabilize_IMU,  //collect IMU readings
-    hit,            //hit target
+//    hit,            //hit target
     endsequence     //Drive away from start
 };
 
@@ -73,7 +70,6 @@ Time HitMode = {0,-1};
 //Timer Pointer
 hw_timer_t *Timer0 = NULL;
 
-
 //Interrupts
 //Scheduler Interrupt - Clocked @ 1ms - handles state transitions
 void IRAM_ATTR Timer0_ISR()
@@ -86,7 +82,6 @@ void IRAM_ATTR Timer0_ISR()
     programme_ready_flag = 1;
   }
 
-  
   if(IsScheduled(DriveMode)) 
   {
     DriveMode.ms = -1;
@@ -103,7 +98,6 @@ void IRAM_ATTR Timer0_ISR()
 
   }
 
-
   if(IsScheduled(SlowMode)) 
   {
     next_state = slow;
@@ -119,7 +113,6 @@ void IRAM_ATTR Timer0_ISR()
     target_select++;
   }
 
-  
   if(IsScheduled(TargetMode)) 
   {
     PIDUpdate.ms = -1;
@@ -128,32 +121,13 @@ void IRAM_ATTR Timer0_ISR()
     //DriveMode = schedule(targetHit_duration);
   }
   
-  
-  if(IsScheduled(HitMode)) 
-  {
-    HitMode.ms = -1;
-    next_state = hit;
-
-    target_counter++;
-    
-    if(target_select == 1)                    //If first target                 
-    {
-      if(target_counter < 10)                 //After 10 attempts moves on
-      {
-        TargetMode = schedule(500);                           //Move a bit and rescan
-      }
-      else
-      {
-        DriveMode = schedule(500);
-        PIDUpdate = schedule(PID_INTERVAL);
-      }
-    }
-    else
-    {
-      DriveMode = schedule(closestTarget.timeToTarget + 500); //Extra to drive past can
-      PIDUpdate = schedule(PID_INTERVAL);                     //Start PID
-    }
-  }
+//  if(IsScheduled(HitMode)) 
+//  {
+//    HitMode.ms = -1;
+//    next_state = hit;
+//    DriveMode = schedule(closestTarget.timeToTarget + 500); //Extra to drive past can
+//    PIDUpdate = schedule(PID_INTERVAL);                     //Start PID
+//  }
   
   if(IsScheduled(EndProtocol)) 
   {
@@ -192,41 +166,6 @@ void setupTimer()
   timerAlarmEnable(Timer0);
 }
 
-//Drive Functions
-void forward(int dutyCyclePercentage) 
-{
-  // Convert duty cycle percentage to PWM duty cycle value (0-255)
-  int dutyCycleValue = map(dutyCyclePercentage, 0, 100, 0, 255);
-  
-  ledcWrite(0, dutyCycleValue); // Set PWM duty cycle
-}
-
-void reverse(int dutyCyclePercentage) 
-{
-  // Convert duty cycle percentage to PWM duty cycle value (0-255)
-  int dutyCycleValue = map(dutyCyclePercentage, 0, 100, 0, 255);
-  
-  ledcWrite(1, dutyCycleValue); // Set PWM duty cycle
-}
-
-void steer(int steering) 
-{
-    steering = constrain(steering, -20, 20);
-    int dutycycle; // declare dutycycle here
-
-//    Serial.println(steering);
-    if (steering < 0) 
-    {
-        // Map the range from -20 to 0 to the duty cycle range of 71 to 82 with resolution of 6
-        dutycycle = map(steering, -20, 0, 71, 82);
-    } 
-    else 
-    {
-        // Map the range from 0 to 20 to the duty cycle range of 82 to 88(maintaining the same value)
-        dutycycle = map(steering, 0, 20, 82, 88);
-    }
-    ledcWrite(2, dutycycle);
-}
   
 void setupDrive()
 {
@@ -244,36 +183,6 @@ void setupDrive()
   ledcWrite(2, 82);                       // Default to Straight     
 }
 
-void carControl(float control_signal)
-{
-  //Constrain PID error and map to steering range
-  int round_signal = constrain(round(control_signal), -60, 60);
-  int steering_angle = map(round_signal, -60, 60, -20, 20);
-  steer(steering_angle);
-  
-  if (steering_angle < 30 && steering_angle > -30) 
-  {
-        forward(100); // Move forward with speed 100
-  } 
-  else 
-  {
-        forward(80); // Move forward with speed 80
-  }
-
-//  if (millis() - lastPrint > PRINT_SPEED) 
-//  {
-//    Serial.print("Control Signal: ");
-//    Serial.println(control_signal, 0);
-//    Serial.print("Rounded Signal: ");
-//    Serial.println(round_signal);
-//    Serial.print("Steering Angle: ");
-//    Serial.println(steering_angle);    
-//    Serial.println();
-//    lastPrint = millis(); // Update lastPrint time
-//  }
-  
-}
-
 
 //Main
 void setup()
@@ -281,6 +190,7 @@ void setup()
   Serial.begin(115200);
   setupDrive();
   setupIMU();
+//  initIMU();
   setupTimer();
   setupPID(&Steer_PID, P_Gain, I_Gain, D_Gain, I_Limit);
   setupBluetooth();
@@ -289,13 +199,14 @@ void setup()
 
 void loop()
 {
-  
-    updateYaw();
+      
     switch(current_state)
     {
       case programme:
       {
+//        updateIMU();
         straight_yaw = getYaw();
+        
         if(programme_ready_flag == 1)
         {
             //Move wheels back and forth
@@ -329,6 +240,10 @@ void loop()
               Targets[index].angleFromStraight = normalizeAngle360(getBluetoothReading(index+1, 'a') + straight_yaw);
               Serial.println("Angle: ");
               Serial.print(Targets[index].angleFromStraight);
+
+              Serial.print("Straight yaw: ");
+              Serial.println(straight_yaw);
+              
               
               if (readingType == 0) 
               {
@@ -342,10 +257,10 @@ void loop()
               Serial.println(Targets[index].isWaypoint);
            }
 
-////          //Non-BlueTooth Definitions            
+//            //Non-BlueTooth Definitions            
 //            //Set Target 0
-//            Targets[0].distance = 1;
-//            Targets[0].angleFromStraight = 215 + straight_yaw;
+//            Targets[0].distance = 4;
+//            Targets[0].angleFromStraight = normalizeAngle360(-30 + straight_yaw);
 //            Targets[0].isWaypoint = false;
 //            //Set Target 1
 //            Targets[1].distance = 10;
@@ -374,10 +289,11 @@ void loop()
 
       case idle:
       {
+
+        //Wait for BT start signal
         forward(0);
         reverse(0);
         steer(0);
-        //Wait for BT start signal
         start_flag = getBluetoothFlag();
 //        start_flag = 1;
         
@@ -403,47 +319,30 @@ void loop()
         break;
       }
 
-      
-      
       case drive:
       {
         reverse(0);
-        actual_yaw= getYaw();
 
-        if(target_select == 0)
+//        updateIMU();
+        actual_yaw = getYaw();
+
+        if( PID_flag == 1)
         {
-          forward(100);
-          steer(-1);
-        
-        if (millis() - lastPrint > PRINT_SPEED) 
-        {
-          //Serial.print(actual_yaw);
-          Serial.print("DRIVE STRAIGHT");
-          Serial.println();
-          lastPrint = millis(); // Update lastPrint time
-        }
-        
-        }
-        else
-        {
-          
-          if( PID_flag == 1)
-          {
-          control_signal = PID(&Steer_PID, Targets[target_select].angleToTarget, actual_yaw);
-          carControl(control_signal);          
+
+          currentSteering = rateLimiter(Targets[target_select].angleFromStraight, actual_yaw, currentSteering);
+          steer(currentSteering);
+          forward(100); 
           PID_flag = 0;
+        }
         
         if (millis() - lastPrint > PRINT_SPEED) 
         {
-          //Serial.print(actual_yaw);
-          Serial.print("DRIVE PID");
+          Serial.print(actual_yaw);
+          Serial.print("DRIVE");
           Serial.println();
           lastPrint = millis(); // Update lastPrint time
         }
-          }          
-        }
-
-                  
+           
         break;
       }
       
@@ -465,127 +364,36 @@ void loop()
       case target:
       {
         reverse(0);
-        forward(0);
-        steer(0);
-        if (millis() - lastPrint > PRINT_SPEED) 
-        {
-          Serial.print("TARGET");
-          Serial.println();
-          
-          Serial.print(target_counter);
-          Serial.println();
-          lastPrint = millis(); // Update lastPrint time
-        }
+            
+        strikeCanCloseDistance();
+       
+        next_state = stabilize_IMU;
         
-         closestTarget = scanForTargets_Ultrasound();
-         if (closestTarget.angleToTarget != -690) 
-         {
-             Serial.println("TARGET SUCCESSFULlY LOCATED");
-             next_state = stabilize_IMU;      //Allow some IMU readings to be taken
-             HitMode = schedule(500);         //Schedule Transition to hit mode
-             closestTarget.distance = closestTarget.distance/100;    //Convert to m
-             calculateTimeAndAngle(&closestTarget);       //Note calculating with angle from car direction not heading - heading calculated in Stabalize_IMU before PID 
-         } else 
-         {
-              Serial.println("UNABLE TO LOCATE TARGET");
-              next_state = stabilize_IMU;  //Stabilize IMU while it waits
-              DriveMode = schedule(500);  //Drive away
-         }
         break;
       }
 
       case stabilize_IMU:
       {
         actual_yaw= getYaw();
-        
-      if(target_select != 1)
-      { 
-      closestTarget.angleToTarget = normalizeAngle360( closestTarget.angleToTarget + actual_yaw);              //Calculate absolute angle to can
-      calculateTimeAndAngle(&closestTarget);                  //Calculate params 
+        //closestTarget.angleToTarget = normalizeAngle360(closestTarget.angleToTarget + actual_yaw);              //Calculate absolute angle to can
+        //calculateTimeAndAngle(&closestTarget);                  //Calculate params 
           if (millis() - lastPrint > PRINT_SPEED) 
         {
-          Serial.print("Stabilize_IMU with calcs");
+          Serial.print("Stabilize_IMU");
           Serial.println();
           lastPrint = millis(); // Update lastPrint time
         }
-      }
-      else
-      {
-        if (millis() - lastPrint > PRINT_SPEED) 
-        {
-          Serial.print("Stabilize_IMU NO calcs");
-          Serial.println();
-          lastPrint = millis(); // Update lastPrint time
-        }
-      }
-
-
-      
         break;
       }
-
       
-      case hit:
-      {
-        
-        reverse(0);
-        if(target_select == 1) //target_select has been incremented when it slows down => if first target target manually several times
-        {
-            if (millis() - lastPrint > PRINT_SPEED) 
-            {
-              Serial.print("HIT MANUAL");
-              Serial.println();
-              lastPrint = millis(); // Update lastPrint time
-            } 
-          
-          if(closestTarget.angleToTarget < -5)       //If to left of target turn left and move slowly
-          {
-            steer(-10);
-            forward(80);
-          }
-          else if(closestTarget.angleToTarget > 5) //If to right of target turn right and move slowly
-          {
-            steer(10);
-            forward(80);
-          }
-          else                                    //If relatively straight go forward full and schedule change to drive for next target
-          {
-            steer(0);
-            forward(100);
-            target_counter = 100;
-            next_state = stabilize_IMU;
-            DriveMode = schedule(closestTarget.timeToTarget+500);
-            HitMode.ms = -1;
-          }
-        }
-        
-        else
-        {
-          actual_yaw= getYaw();
-          if( PID_flag == 1)
-          {
-            control_signal = PID(&Steer_PID, closestTarget.angleToTarget, actual_yaw);
-            carControl(control_signal);
-            PID_flag = 0;
-            if (millis() - lastPrint > PRINT_SPEED) 
-            {
-              Serial.print("HIT PID");
-              Serial.println();
-              lastPrint = millis(); // Update lastPrint time
-            }  
-          }
-        }
-        
-        break;
-      }
       
       case endsequence:
       {
         actual_yaw= getYaw();
         if( PID_flag == 1)
         {
-          control_signal = PID(&Steer_PID, End_Target.angleToTarget, actual_yaw);
-          carControl(control_signal);
+//          control_signal = PID(&Steer_PID, End_Target.angleToTarget, actual_yaw);
+//          carControl(control_signal);
          
           PID_flag = 0;
         }

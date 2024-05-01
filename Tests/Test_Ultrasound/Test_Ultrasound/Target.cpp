@@ -31,12 +31,22 @@ double sendUltrasoundPing()
     delayMicroseconds(10);
     digitalWrite(triggerPin, LOW);
 
-
+    long startTime = micros(); // start the timer
     // Wait for pulse to return
-    while (digitalRead(echoPin) == LOW);
-    long startTime = micros();
+    while (digitalRead(echoPin) == LOW) {
+      long tempReading = micros();
+      if (tempReading - startTime > 30000) {
+        return 30000;
+      }
+    };
+    startTime = micros();
 
-    while (digitalRead(echoPin) == HIGH);
+    while (digitalRead(echoPin) == HIGH) {
+      long tempReading = micros();
+      if (tempReading - startTime > 30000) {
+        return 30000;
+      }
+    }
     double travelTime = micros() - startTime;
 
 //    return the returning pulse's width
@@ -74,12 +84,6 @@ Target scanForTargets_Ultrasound()
 
     {
 
-        
-        for (int i = 0; i < 30; i++)
-        {
-            turnServo(0);
-            Serial.println(sendUltrasoundPing());
-        }
 
         
         // TAKE 180 READINGS
@@ -95,6 +99,13 @@ Target scanForTargets_Ultrasound()
         while (1)
         {
             int targetAngle = 0;
+
+            // Smooth the readings
+            for (int i = 1; i < 179; i++) {
+              if ((distanceReadings[i-1] - distanceReadings[i] < -10 or distanceReadings[i-1] - distanceReadings[i] > 10) and (distanceReadings[i+1] - distanceReadings[i] < -10 or distanceReadings[i+1] - distanceReadings[i] > 10)) {
+                distanceReadings[i] = distanceReadings[i-1];
+              }
+            }
 
             // Find the smallest distance in the array (which is greater than the lower boundary)
             for (int i = 1; i < 180; i++)
@@ -166,47 +177,102 @@ Target scanForTargets_Ultrasound()
             }
 
             // CHECK TO SEE IF THERE WAS A VALID SCAN
-            if (leftmostAngle - rightmostAngle <= 5)
-            {
-                Serial.println("False Reading: Angle range was too small");
-                lowerBoundary = furthestDistance_inLimits;
-            }
-            else if (furthestDistance_inLimits - closestDistance_inLimits >= 15)
-            {
-                Serial.println("False Reading: distance range was too big: ");
-                lowerBoundary = furthestDistance_inLimits;
-            }
-            else if (leftmostAngle - rightmostAngle >= 90)
-            {
-                Serial.println("False Reading: angle range was too big: ");
-                lowerBoundary = furthestDistance_inLimits;
-            }
-            else
-            {
-                // CAN DETECTED
-                // Average min and max to find the centre point of the can,
-                closestTarget.angleToTarget = round((leftmostAngle + rightmostAngle) / 2);
-                closestTarget.distance = distanceReadings[static_cast<int>(closestTarget.angleToTarget)];
-                // turn ultrasound to face can
-                
-                turnServo(closestTarget.angleToTarget);
 
+            double objectLength = (distanceReadings[leftmostAngle]+distanceReadings[rightmostAngle])/2 * sin((3.1415/180*(leftmostAngle - rightmostAngle))/2);
+            double objectDepth = furthestDistance_inLimits - closestDistance_inLimits;
 
-                Serial.print("FINAL ANGLE: ");
-                Serial.println(static_cast<int>(closestTarget.angleToTarget));
-                Serial.print("FINAL DISTANCE: ");
-                Serial.println(static_cast<int>(closestTarget.distance));
-                Serial.print("FINAL RANGE: ");
-                Serial.print(leftmostAngle);
-                Serial.print(" to ");
-                Serial.println(rightmostAngle);
-                Serial.print("FINAL DEPTH: ");
-                Serial.println(furthestDistance_inLimits - closestDistance_inLimits);
-                
-                // then move angle to the correct range, from 0 to 180 to -90 to 90
-                closestTarget.angleToTarget = closestTarget.angleToTarget - 90;              
-                return closestTarget;
+            Serial.println("SCAN RESULTS");
+           
+            Serial.print("Object Length: ");
+            Serial.println(objectLength);
+            Serial.print("Distance Range: ");
+            Serial.println(objectDepth);
+            
+
+            // these equation was modelled experimentally in advance 
+            targetAngle = round((leftmostAngle + rightmostAngle) / 2);
+            double minLength = distanceReadings[targetAngle]*0.35+ 1;
+            double maxLength = distanceReadings[targetAngle]*0.7+3;
+
+            Serial.print("Max Length: ");
+            Serial.println(maxLength);
+            Serial.print("Min Length: ");
+            Serial.println(minLength);
+            Serial.print("Target Angle: ");
+            Serial.println(targetAngle);
+
+            Serial.println("Target Distance: ");
+            Serial.print(distanceReadings[targetAngle]);
+
+            double minDepth = 3;
+            double maxDepth = 7;
+            if (distanceReadings[targetAngle] < 15){
+              minDepth = 1;
             }
+
+            if (distanceReadings[targetAngle] < 40){
+              minDepth = 2;
+            }
+
+            if (objectLength > minLength and objectLength < maxLength and objectDepth > minDepth and objectDepth < maxDepth) {
+              // CAN DETECTED
+              closestTarget.angleToTarget = targetAngle;
+              closestTarget.distance = distanceReadings[static_cast<int>(closestTarget.angleToTarget)];
+              turnServo(closestTarget.angleToTarget);
+              closestTarget.angleToTarget = closestTarget.angleToTarget - 90;              
+              return closestTarget;
+            } else {
+              // NOT A CAN
+              lowerBoundary = furthestDistance_inLimits;
+            }
+
+            
+//            if (leftmostAngle - rightmostAngle <= 5)
+//            {
+//                Serial.println("False Reading: Angle range was too small");
+//                lowerBoundary = furthestDistance_inLimits;
+//            }
+//            else if (leftmostAngle - rightmostAngle >= 90)
+//            {
+//                Serial.println("False Reading: angle range was too big: ");
+//                lowerBoundary = furthestDistance_inLimits;
+//            }
+//            else if (furthestDistance_inLimits - closestDistance_inLimits >= 15)
+//            {
+//                Serial.println("False Reading: distance range was too big: ");
+//                lowerBoundary = furthestDistance_inLimits;
+//            }
+//            else if (furthestDistance_inLimits - closestDistance_inLimits <= 3)
+//            {
+//                Serial.println("False Reading: distance range was too small: ");
+//                lowerBoundary = furthestDistance_inLimits;
+//            }
+//            else
+//            {
+//                // CAN DETECTED
+//                // Average min and max to find the centre point of the can,
+//                closestTarget.angleToTarget = round((leftmostAngle + rightmostAngle) / 2);
+//                closestTarget.distance = distanceReadings[static_cast<int>(closestTarget.angleToTarget)];
+//                // turn ultrasound to face can
+//                
+//                turnServo(closestTarget.angleToTarget);
+//
+//
+//                Serial.print("FINAL ANGLE: ");
+//                Serial.println(static_cast<int>(closestTarget.angleToTarget));
+//                Serial.print("FINAL DISTANCE: ");
+//                Serial.println(static_cast<int>(closestTarget.distance));
+//                Serial.print("FINAL RANGE: ");
+//                Serial.print(leftmostAngle);
+//                Serial.print(" to ");
+//                Serial.println(rightmostAngle);
+//                Serial.print("FINAL DEPTH: ");
+//                Serial.println(furthestDistance_inLimits - closestDistance_inLimits);
+//                
+//                // then move angle to the correct range, from 0 to 180 to -90 to 90
+//                closestTarget.angleToTarget = closestTarget.angleToTarget - 90;              
+//                return closestTarget;
+//            }
         }
 
     };

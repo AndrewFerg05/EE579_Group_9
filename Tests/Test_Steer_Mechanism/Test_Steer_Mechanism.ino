@@ -127,7 +127,7 @@ void setupDrive()
 void setup() 
 {
   setupDrive();
-  setupBluetooth();
+//  setupBluetooth();
   Serial.begin(115200);
 }
 
@@ -143,7 +143,8 @@ void loop()
           Serial.println();
           lastPrint = millis(); // Update lastPrint time
         }
-        start_flag = getBluetoothFlag();
+//        start_flag = getBluetoothFlag();
+        start_flag = 1;
         if(start_flag == 1)
         {
           next_state = drive;
@@ -162,55 +163,62 @@ void loop()
           lastPrint = millis(); // Update lastPrint time
         }
 
-        steer(-20);
-        forward(100);
-        delay(1000);
-        forward(0);
-        delay(1000);
-        reverse(100);
-        delay(1000);
-        reverse(0);
-        delay(1000);
-
-        steer(-10);
-        forward(100);
-        delay(1000);
-        forward(0);
-        delay(1000);
-        reverse(100);
-        delay(1000);
-        reverse(0);
-        delay(1000);
-                
-        steer(0);
-        forward(100);
-        delay(1000);
-        forward(0);
-        delay(1000);
-        reverse(100);
-        delay(1000);
-        reverse(0);
-        delay(1000);
-        
-        steer(10);
-        forward(100);
-        delay(1000);
-        forward(0);
-        delay(1000);
-        reverse(100);
-        delay(1000);
-        reverse(0);
-        delay(1000);
-
         steer(20);
-        forward(100);
-        delay(1000);
+        forward(75);
+        delay(1200);
         forward(0);
-        delay(1000);
-        reverse(100);
+        delay(250);
+        steer(-20);
+        reverse(75);
         delay(1000);
         reverse(0);
-        delay(1000);
+        while(1){}
+//        forward(0);
+//        delay(1000);
+//        reverse(100);
+//        delay(1000);
+//        reverse(0);
+//        delay(1000);
+//
+//        steer(-10);
+//        forward(100);
+//        delay(1000);
+//        forward(0);
+//        delay(1000);
+//        reverse(100);
+//        delay(1000);
+//        reverse(0);
+//        delay(1000);
+//                
+//        steer(0);
+//        forward(100);
+//        delay(1000);
+//        forward(0);
+//        delay(1000);
+//        reverse(100);
+//        delay(1000);
+//        reverse(0);
+//        delay(1000);
+//        
+//        steer(10);
+//        forward(100);
+//        delay(1000);
+//        forward(0);
+//        delay(1000);
+//        reverse(100);
+//        delay(1000);
+//        reverse(0);
+//        delay(1000);
+//
+//        steer(20);
+//        forward(100);
+//        delay(1000);
+//        forward(0);
+//        delay(1000);
+//        reverse(100);
+//        delay(1000);
+//        reverse(0);
+//        delay(1000);
         next_state = idle;
         break;
       }

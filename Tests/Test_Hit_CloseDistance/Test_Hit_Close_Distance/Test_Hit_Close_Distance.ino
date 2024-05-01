@@ -1,3 +1,4 @@
+// REWRITE ALL THIS
 //Used to test the drive mechanism of the car
 //Programme ESP32 - then disconnect from computer and connect the ESP32 to the 9V battery
 //Car waits while phone connects to the ESP32 via Bluetooth (BT)
@@ -28,11 +29,16 @@
 
 
 
-#include "BT_Comms.h" 
+#include "Target.h" 
 
 #define MOTOR_FORWARD_PIN 13
 #define MOTOR_REVERSE_PIN 12
+#define MOTOR_STEER_PIN 17
 #define DRIVE_PWM_FREQ 10
+#define STEER_PWM_FREQ 50
+
+#define STEADY_SPEED 1
+
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -41,29 +47,13 @@ unsigned long lastPrint = 0; // Keep track of print time
 enum State
 {
     idle,           //wait for start
+    target,         // scanning
     drive,          //moving towards target
 };
 
 enum State current_state = idle, next_state = idle;
 bool start_flag = 0;
 
-
-void forward(int dutyCyclePercentage) 
-{
-  // Convert duty cycle percentage to PWM duty cycle value (0-255)
-  int dutyCycleValue = map(dutyCyclePercentage, 0, 100, 0, 255);
-  
-  ledcWrite(0, dutyCycleValue); // Set PWM duty cycle
-}
-
-
-void reverse(int dutyCyclePercentage) 
-{
-  // Convert duty cycle percentage to PWM duty cycle value (0-255)
-  int dutyCycleValue = map(dutyCyclePercentage, 0, 100, 0, 255);
-  
-  ledcWrite(1, dutyCycleValue); // Set PWM duty cycle
-}
 
 
 void setupDrive()
@@ -75,13 +65,16 @@ void setupDrive()
   ledcAttachPin(MOTOR_FORWARD_PIN, 0);  // Attach PWM channel 0 to forward motor pin
   ledcSetup(0, DRIVE_PWM_FREQ, 8);      // PWM frequency: 5000 Hz, PWM resolution: 8-bit (0-255)
   ledcWrite(0, 0);                      // Set PWM duty cycle 
+
+  ledcAttachPin(MOTOR_STEER_PIN, 3);      // Attach PWM channel 2 to steering servo pin
+  ledcSetup(3, 50, 10);                   // Configure LEDC channel 2 with a frequency of 50Hz and a resolution of 8 bits
+  ledcWrite(3, 82);                       // Default to Straight 
 }
 
 
 void setup() 
 {
   setupDrive();
-  setupBluetooth();
   Serial.begin(115200);
 }
 
@@ -98,16 +91,30 @@ void loop()
           lastPrint = millis(); // Update lastPrint time
         }
         
-        start_flag = getBluetoothFlag();
+        start_flag = 1;
         if(start_flag == 1)
         {
-          next_state = drive;
+          next_state = target;
           start_flag = 0;
-          
         }
         break;
       }
+
+      case target:
+      {
+        
+        strikeCanCloseDistance();
+
+        while(1) {
+          delay(1000);
+        }
+
+   
+        break;
       
+      }
+
+
       case drive:
       {
         if (millis() - lastPrint > PRINT_SPEED) 

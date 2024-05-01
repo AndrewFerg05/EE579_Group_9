@@ -38,5 +38,4 @@ void carControl(float, float, float, float);
 void steer(int);
 void forward(int);
 void reverse(int);
-void turnServo(int);
 #endif

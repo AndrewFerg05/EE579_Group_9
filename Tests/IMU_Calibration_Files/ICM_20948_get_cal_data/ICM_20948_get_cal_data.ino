@@ -49,7 +49,7 @@ void setup()
   WIRE_PORT.setClock(400000);
 #endif
 
-  //myICM.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
+  myICM.enableDebugging(); // Uncomment this line to enable helpful debug messages on Serial
 
   bool initialized = false;
   while (!initialized)
@@ -72,6 +72,7 @@ void setup()
     {
       initialized = true;
     }
+     
   }
   // find gyro offsets
   SERIAL_PORT.println(F("Hold sensor still for gyro offset calibration ..."));

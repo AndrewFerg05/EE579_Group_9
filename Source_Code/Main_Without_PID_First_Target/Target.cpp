@@ -31,12 +31,22 @@ double sendUltrasoundPing()
     delayMicroseconds(10);
     digitalWrite(triggerPin, LOW);
 
-
+    long startTime = micros(); // start the timer
     // Wait for pulse to return
-    while (digitalRead(echoPin) == LOW);
-    long startTime = micros();
+    while (digitalRead(echoPin) == LOW) {
+      long tempReading = micros();
+      if (tempReading - startTime > 4000) {
+        return 10000;
+      }
+    };
+    startTime = micros();
 
-    while (digitalRead(echoPin) == HIGH);
+    while (digitalRead(echoPin) == HIGH) {
+      long tempReading = micros();
+      if (tempReading - startTime > 4000) {
+        return 10000;
+      }
+    }
     double travelTime = micros() - startTime;
 
 //    return the returning pulse's width
@@ -171,14 +181,19 @@ Target scanForTargets_Ultrasound()
                 Serial.println("False Reading: Angle range was too small");
                 lowerBoundary = furthestDistance_inLimits;
             }
+            else if (leftmostAngle - rightmostAngle >= 90)
+            {
+                Serial.println("False Reading: angle range was too big: ");
+                lowerBoundary = furthestDistance_inLimits;
+            }
             else if (furthestDistance_inLimits - closestDistance_inLimits >= 15)
             {
                 Serial.println("False Reading: distance range was too big: ");
                 lowerBoundary = furthestDistance_inLimits;
             }
-            else if (leftmostAngle - rightmostAngle >= 90)
+            else if (furthestDistance_inLimits - closestDistance_inLimits <= 3)
             {
-                Serial.println("False Reading: angle range was too big: ");
+                Serial.println("False Reading: distance range was too small: ");
                 lowerBoundary = furthestDistance_inLimits;
             }
             else
