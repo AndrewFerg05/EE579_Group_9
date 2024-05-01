@@ -9,8 +9,7 @@
 #define I_Gain 0
 #define D_Gain 0 
 // set kp, ki, and kd parameters in PID.cpp
-
-
+extern int prevError;
 
 // Struct Definitions
 typedef struct PIDConfig{
@@ -18,7 +17,7 @@ typedef struct PIDConfig{
     float kd;
     float kp;
     float overflow;
-    float prevError;
+    float previousError;
     float integral;
 }PIDConfig;
 
@@ -28,7 +27,9 @@ extern float setup_flag;
 
 // Function Definiitions
 extern void setupPID(PIDConfig*, int, int, int, float);
-extern float PID(PIDConfig*, float, float);
+//extern float PID(PIDConfig*, float, float);
+extern float rateLimiter(int, int, int);
 extern float normalizeAngle180(float);
 extern float normalizeAngle360(float);
+
 #endif

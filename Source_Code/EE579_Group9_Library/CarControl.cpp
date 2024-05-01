@@ -18,39 +18,45 @@ void setupDrive()
 //  Steer
   ledcAttachPin(MOTOR_STEER_PIN, 3);      // Attach PWM channel 2 to steering servo pin
   ledcSetup(3, 50, 10);                   // Configure LEDC channel 2 with a frequency of 50Hz and a resolution of 8 bits
-  ledcWrite(3, 82);                       // Default to Straight     
+  ledcWrite(3, 82);                       // Default to Straight        
 }
 
 void forward(int dutyCyclePercentage) 
 {
   // Convert duty cycle percentage to PWM duty cycle value (0-255)
-  int dutyCycleValue = map(dutyCyclePercentage, 0, 100, 0, 255);
+  int dutyCycleValue = map(dutyCyclePercentage, 0, 100, 0, 255); 
   ledcWrite(0, dutyCycleValue); // Set PWM duty cycle
 }
 
 void reverse(int dutyCyclePercentage) 
 {
   // Convert duty cycle percentage to PWM duty cycle value (0-255)
-  int dutyCycleValue = map(dutyCyclePercentage, 0, 100, 0, 255);
+  int dutyCycleValue = map(dutyCyclePercentage, 0, 100, 0, 255); 
   ledcWrite(1, dutyCycleValue); // Set PWM duty cycle
 }
 
 void steer(int steering) 
 {
+    //Constrain steering angle input
     steering = constrain(steering, -20, 20);
-    int dutycycle; // declare dutycycle here
+    
+    int dutycycle;
+//  Straight = Duty Cycle 82
+//  Full lock left = Duty Cycle 71
+//  Full lock left = Duty Cycle 88
+
 
     if (steering < 0) 
     {
-        // Map the range from -20 to 0 to the duty cycle range of 71 to 82 with resolution of 6
+        // Map the range from -20 to 0 to the duty cycle range of 71 to 82 - full left steerin range
         dutycycle = map(steering, -20, 0, 71, 82);
     } 
     else 
     {
-        // Map the range from 0 to 20 to the duty cycle range of 82 to 88(maintaining the same value)
+        // Map the range from 0 to 20 to the duty cycle range of 82 to 88 - full right steering range
         dutycycle = map(steering, 0, 20, 82, 88);
     }
-    ledcWrite(3, dutycycle);
+    ledcWrite(3, dutycycle);  //Update servo PWM duty cycle
 }
 
 

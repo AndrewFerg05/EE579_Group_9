@@ -3,22 +3,28 @@
 
 //Variables
     //Gyro
-float Gscale = (PI / 180.0) * 0.00763;
-float G_offset[3] = {24.2, 55.8, 3.0};
+float Gscale = (PI / 180.0) * 0.00763; 
+float G_offset[3] = {-92.6, 123.6, 196.1}; 
+
+
 
     //Accelerometer
-float A_B[3] = {-44.53, -2.87, 417.58};
+float A_B[3] =  {312.92, 1196.59, 689.69};
 float A_Ainv[3][3] = {
-{ 0.0538 , 0.00281 , -0.00146 },
-{ 0.00281 , 0.06101 , 0.00051 },
-{ -0.00146 , 0.00051 , 0.06159 }};
+{ 0.05479 , 0.00359 , -0.00116 },
+{ 0.00359 , 0.06953 , 0.00076 },
+{ -0.00116 , 0.00076 , 0.06205 }};
 
     //Magnetometer
-float M_B[3] =  {-178.85, 169.83, 35.77};
+float M_B[3] =  {-78.71, 290.38, -115.03};
+
 float M_Ainv[3][3] = {
-{ 3.03549 , -0.00346 , -0.04152 },
-{ -0.00346 , 2.83902 , 0.08724 },
-{ -0.04152 , 0.08724 , 2.81818 }};
+{ 3.2026 , -0.04717 , -0.34181 },
+{ -0.04717 , 4.05522 , 0.40158 },
+{ -0.34181 , 0.40158 , 2.81148 }};
+
+
+
 
 float declination = -14.84;
 
@@ -231,6 +237,9 @@ void updateYaw()
 }
 
 float average_Yaw[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
+float prev_yaw = 0;
+float average = 0;
+float wrong_count = 0;
 int i = 0;
 int flag = 0;
 
@@ -242,17 +251,39 @@ float getYaw()
       yaw = -(yaw + declination);
       if (yaw < 0) yaw += 360.0;
       if (yaw >= 360.0) yaw -= 360.0;
-
       // return yaw;
-
       
-      if (i==4) flag = 1;
+      if (i==4) 
+      {
+        prev_yaw = (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4])/5;
+        flag = 1;
+        
+      }
+
       if (i==5) i = 0;
+
       average_Yaw[i] = yaw;
       i++;
       if (flag == 0) return yaw;
 
+      average = (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4])/5;
 
-      return (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4])/5;
-      
+      if(((average - prev_yaw) > 20)||((average - prev_yaw) < -20))
+      {
+        wrong_count++;
+
+        if(wrong_count > 5)
+        {
+          wrong_count = 0;
+          prev_yaw = average;
+        }
+
+        return prev_yaw;
+      }
+      else
+      {
+        wrong_count = 0;
+        prev_yaw = average;
+        return average;
+      }      
 }
