@@ -14,7 +14,7 @@
 #define EndProtocol_duration 100000
 #define SystemEnd_duration 120000
 
-#define RATELIMITER_INTERVAL 50
+#define RATELIMITER_INTERVAL 100
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -172,7 +172,6 @@ void setup()
   setupDrive();
   setupIMU();
   setupTimer();
-  setupPID(&Steer_PID, P_Gain, I_Gain, D_Gain, I_Limit);
   setupBluetooth();
 }
 
@@ -181,6 +180,7 @@ void loop()
 {
     
     updateYaw();  // Update yaw as frequently as possible to keep IMU fresh 
+    turnServo(90);
     
     switch(current_state)
     {
@@ -188,10 +188,10 @@ void loop()
       {
         
         // Stabilise the IMU by running it for some time
-//        for(int i = 0; i < 50; i++) {
-//          updateYaw();
-//          getYaw();
-//        }
+        for(int i = 0; i < 50; i++) {
+          updateYaw();
+          getYaw();
+        }
 
        
         straight_yaw = getYaw(); // set straight yaw: the reference for all other angles
@@ -222,8 +222,9 @@ void loop()
             {
               int readingType = getBluetoothInputType(); // 0 for Target, 1 for Waypoint
               Targets[index].distance = getBluetoothReading(index+1, 'd');
-              Targets[index].angleFromStraight = normalizeAngle360(getBluetoothReading(index+1, 'a') + straight_yaw);
-//              prevError = Targets[index].angleFromStraight - straight_yaw; // this will help to stabilise the rate limiter. See RateLimiter.cpp    
+              float angleReading = getBluetoothReading(index+1, 'a');
+              Targets[index].angleFromStraight = normalizeAngle360(angleReading + straight_yaw);
+              prevError =  angleReading; // this will help to stabilise the rate limiter. See RateLimiter.cpp    
               if (readingType == 0) { 
                 Targets[index].isWaypoint = false;
               } else {
@@ -231,6 +232,9 @@ void loop()
               }
            }
 
+           BTprintfloat(prevError);
+           BTprintfloat(Targets[0].angleFromStraight);
+           BTprintfloat(straight_yaw);
 
             calculateTargets();
             next_state = idle;
@@ -290,7 +294,7 @@ void loop()
           steer(currentSteering);
           forward(100); 
           RateLimiter_Flag = 0;
-          BTprintfloat(currentSteering);
+//          BTprintfloat(currentSteering);
           
         }
         
@@ -375,6 +379,7 @@ void loop()
       }
     }
 
-    current_state = next_state;
+    
     }
+    current_state = next_state;
 }

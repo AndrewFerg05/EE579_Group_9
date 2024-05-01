@@ -61,8 +61,17 @@ float rateLimiter(int desiredAngle, int currentAngle, int currentSteering)
   if (error > 180 or error < -180) { // this solves the 360 region issue
     error *= -1;
   }
+
+  BTprintfloat(abs(prevError - error));
+  BTprintfloat(abs(prevError) - abs(error));
+  BTprintfloat(abs(abs(prevError) - abs(error));
+  BTprintfloat(0);
+//  BTprintfloat(prevError);
+//  BTprintfloat(error);
+//  BTprintfloat(0);
+
   
-  if (abs(prevError - error) < 10)
+  if (abs(abs(prevError) - abs(error)) < 10)
   {
     prevError = error;
   }

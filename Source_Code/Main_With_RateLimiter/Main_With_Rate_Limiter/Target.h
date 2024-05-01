@@ -32,7 +32,7 @@ extern void calculateTime(Target*);
 extern void setupUltrasound(); 
 extern double sendUltrasoundPing(); 
 extern Target scanForTargets_Ultrasound(); // scans 180 deg, then returns closest target
-extern void turnServo(); // controls servo direction
+extern void turnServo(int); // controls servo direction
 extern float normalizeTargetAngle(float); // Ensure angle is between 0 and 360
 extern bool collisionTest(); // Check if the car is about to hit an object
 
