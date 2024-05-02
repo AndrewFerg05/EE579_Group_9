@@ -1,13 +1,13 @@
 #ifndef BT_COMMS_H_
 #define BT_COMMS_H_
 
-//Function Definitions
+// Function Definitions
 
 extern void setupBluetooth();
 
 extern float getBluetoothReading(int, char); // Ask the user for a distance / angle reading
 
-extern int getBluetoothInputType();  // Ask the user if it is a waypoint / or can
+extern int getBluetoothInputType(); // Ask the user if it is a waypoint / or can
 
 extern int getBluetoothNumberTargets(); // Ask the user for the number of targets
 

@@ -28,7 +28,7 @@ extern float setup_flag;
 // Function Definiitions
 extern void setupPID(PIDConfig*, int, int, int, float);
 //extern float PID(PIDConfig*, float, float);
-extern float rateLimiter(int, int, int);
+extern float rateLimiter(int, int, float);
 extern float normalizeAngle180(float);
 extern float normalizeAngle360(float);
 

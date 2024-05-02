@@ -1,20 +1,16 @@
 #include "math.h"
 #include "ICM_20948.h"
 
-
 #ifndef IMU_H_
 #define IMU_H_
 #define PI 3.14159265
-#define WIRE_PORT Wire 
-#define AD0_VAL 1  
+#define WIRE_PORT Wire
+#define AD0_VAL 1
 
-
-
-//Variables
+// Variables
 extern ICM_20948_I2C imu; // create an ICM_20948_I2C object imu;
 
-
-//Functions
+// Functions
 extern void setupIMU();
 
 extern float vector_dot(const float a[3], const float b[3]);
@@ -27,6 +23,6 @@ extern void get_scaled_IMU(float Gxyz[3], float Axyz[3], float Mxyz[3]);
 
 extern void updateYaw();
 
-extern float getYaw(); 
+extern float getYaw();
 
 #endif
