@@ -29,6 +29,7 @@
 
 
 #include "BT_Comms.h" 
+#include "CarControl.h"
 
 #define MOTOR_FORWARD_PIN 13
 #define MOTOR_REVERSE_PIN 12
@@ -46,36 +47,6 @@ enum State
 
 enum State current_state = idle, next_state = idle;
 bool start_flag = 0;
-
-
-void forward(int dutyCyclePercentage) 
-{
-  // Convert duty cycle percentage to PWM duty cycle value (0-255)
-  int dutyCycleValue = map(dutyCyclePercentage, 0, 100, 0, 255);
-  
-  ledcWrite(0, dutyCycleValue); // Set PWM duty cycle
-}
-
-
-void reverse(int dutyCyclePercentage) 
-{
-  // Convert duty cycle percentage to PWM duty cycle value (0-255)
-  int dutyCycleValue = map(dutyCyclePercentage, 0, 100, 0, 255);
-  
-  ledcWrite(1, dutyCycleValue); // Set PWM duty cycle
-}
-
-
-void setupDrive()
-{
-  ledcAttachPin(MOTOR_REVERSE_PIN, 1);  // Attach PWM channel 1 to reverse motor pin
-  ledcSetup(1, DRIVE_PWM_FREQ, 8);      // PWM frequency: 5000 Hz, PWM resolution: 8-bit (0-255)
-  ledcWrite(1, 0);                      // Set PWM duty cycle
-  
-  ledcAttachPin(MOTOR_FORWARD_PIN, 0);  // Attach PWM channel 0 to forward motor pin
-  ledcSetup(0, DRIVE_PWM_FREQ, 8);      // PWM frequency: 5000 Hz, PWM resolution: 8-bit (0-255)
-  ledcWrite(0, 0);                      // Set PWM duty cycle 
-}
 
 
 void setup() 
