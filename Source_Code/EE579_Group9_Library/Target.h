@@ -7,9 +7,9 @@
 #define time_offset 100    // Time subtracted so it stops before target
 #define angle_offset 0
 // Ultrasound Pins
-#define servoPin 13
-#define triggerPin 12
-#define echoPin 27
+#define servoPin 16
+#define triggerPin 4
+#define echoPin 2
 
 // Variable Definitions
 typedef struct

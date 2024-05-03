@@ -5,7 +5,7 @@ BluetoothSerial serialBT;
 
 void setupBluetooth()
 {
-  serialBT.begin("Bumpy");
+  serialBT.begin("lil Bumpin");
 
   // Wait For Connection
   while (!serialBT.connected(1000))
@@ -28,7 +28,7 @@ float getBluetoothReading(int n, char measurementType)
   {
     serialBT.print("Enter distance to target ");
     serialBT.print(n);
-    serialBT.println(" in metres.");
+    serialBT.println(" in cm.");
   }
   else if (measurementType == 'a')
   {
@@ -206,7 +206,7 @@ int getBluetoothFlag()
 
 void BTprintint(int a)
 {
-  serialBT.print(a);
+  serialBT.println(a);
 }
 
 void BTprintError(int a)
@@ -217,5 +217,5 @@ void BTprintError(int a)
 
 void BTprintfloat(float a)
 {
-  serialBT.println(a, 0);
+  serialBT.println(a);
 }

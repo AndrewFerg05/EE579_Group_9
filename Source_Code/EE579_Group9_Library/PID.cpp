@@ -49,12 +49,28 @@ void setupPID(PIDConfig *steer, int proportionalGain, int integralGain, int deri
 //
 //    return output;
 //}
+int polarity = 0;
+int prev_polarity=0;
 
 float rateLimiter(int desiredAngle, int currentAngle, float currentSteering)
 {
 
     int error = normalizeAngle180(desiredAngle - currentAngle);
-    float maxRate = 0.01;
+    float maxRate = 0.5;
+
+    if(error < 0 )
+    {
+        polarity = -1;
+    }
+    else
+    {
+        polarity = 1;
+    }
+
+    if(polarity != prev_polarity)
+    {
+        currentSteering = 0;
+    }
 
     if (currentSteering < error)
     {
@@ -67,13 +83,22 @@ float rateLimiter(int desiredAngle, int currentAngle, float currentSteering)
 
     // currentSteering = error * 0.75;
 
-    if (currentSteering < -20)
+    if (currentSteering < -10)
     {
-        currentSteering = -20;
+        currentSteering = -10;
     }
-    else if (currentSteering > 20)
+    else if (currentSteering > 10)
     {
-        currentSteering = 20;
+        currentSteering = 10;
+    }
+
+    if(currentSteering < 0 )
+    {
+        prev_polarity = -1;
+    }
+    else
+    {
+        prev_polarity = 1;
     }
 
     return currentSteering;

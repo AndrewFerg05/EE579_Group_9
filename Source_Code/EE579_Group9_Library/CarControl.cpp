@@ -1,7 +1,6 @@
 #include "CarControl.h"
 #include "Target.h"
 #include "BT_Comms.h"
-
 #include <Arduino.h>
 
 void setupDrive()
@@ -16,8 +15,8 @@ void setupDrive()
   ledcWrite(0, 0);                     // Set PWM duty cycle
                                        //  Steer
   ledcAttachPin(MOTOR_STEER_PIN, 3);   // Attach PWM channel 2 to steering servo pin
-  ledcSetup(3, 50, 10);                // Configure LEDC channel 2 with a frequency of 50Hz and a resolution of 8 bits
-  ledcWrite(3, 82);                    // Default to Straight
+  ledcSetup(3, 50, 11);                // Configure LEDC channel 2 with a frequency of 50Hz and a resolution of 8 bits
+  ledcWrite(3, 164);                    // Default to Straight
 }
 
 void forward(int dutyCyclePercentage)
@@ -47,12 +46,12 @@ void steer(int steering)
   if (steering < 0)
   {
     // Map the range from -20 to 0 to the duty cycle range of 71 to 82 - full left steerin range
-    dutycycle = map(steering, -20, 0, 71, 82);
+    dutycycle = map(steering, -20, 0, 146, 160);
   }
   else
   {
     // Map the range from 0 to 20 to the duty cycle range of 82 to 88 - full right steering range
-    dutycycle = map(steering, 0, 20, 82, 88);
+    dutycycle = map(steering, 0, 20, 160, 170);
   }
   ledcWrite(3, dutycycle); // Update servo PWM duty cycle
 }
@@ -69,7 +68,6 @@ void carControl(float angle, float forwardPower, float reversePower, float durat
     delay(duration * 1000); // ms
     forward(0);
     reverse(0);
-    delay(200);
   }
 }
 
@@ -80,74 +78,155 @@ void strikeCanCloseDistance()
   float driveTime;
   Target closestTarget;
   int numberScans = 0;
+  int steer_intern = 0;
 
-  while (rescan and numberScans <= 10)
+  while (rescan and numberScans <= 15)
   {
     numberScans++;
 
     closestTarget = scanForTargets_Ultrasound();
+    BTprintError(0);
+    BTprintfloat(closestTarget.distance);
+    // BTprintint(closestTarget.angleToTarget);
 
     if (closestTarget.angleToTarget == -690)
     {
+      BTprintError(1);
       // No target was found in 5 scans. Move on to the next target.
       rescan = false;
     }
-
-    if (closestTarget.angleToTarget > -20 and closestTarget.angleToTarget < 20 and closestTarget.distance < 0.25)
+    closestTarget.angleToTarget+=7;
+    BTprintint(closestTarget.angleToTarget);
+    if (closestTarget.angleToTarget > -10 and closestTarget.angleToTarget < 10 and closestTarget.distance < 0.4)
     {
+      BTprintError(2);
       // CAR ALIGNED AND CLOSE
-      carControl(0, 0, 50, 0.5);  // reverse a little (for added effect)
-      carControl(0, 100, 0, 0.5); // strike the can
+      carControl(0, 0, 75, 0.4);  // reverse a little (for added effect)
+      delay(500);
+      steer(-20);
+      delay(200);
+      steer(20);
+      delay(200);
+      steer(0);
+      delay(200);
+      carControl(0, 100, 0, 1); // strike the can
       rescan = false;             // move on to next target
     }
-    else if (closestTarget.angleToTarget > -10 and closestTarget.angleToTarget < 10 and closestTarget.distance > 0.25)
+    else if (closestTarget.angleToTarget > -10 and closestTarget.angleToTarget < 10 and closestTarget.distance < 1.5)
     {
-      // CAR ALIGNED BUT FAR
-      driveTime = (closestTarget.distance - 0.25) / car_speed; // aim to stop a little bit before the can
-      carControl(0, 100, 0, driveTime);                        // Drive straight up to the can
+      BTprintError(3);
+      if(closestTarget.angleToTarget<0)
+      {
+        steer_intern = -10;
+      }
+      else if (closestTarget.angleToTarget>0)
+      {
+        steer_intern = 10;
+      }
+      else
+      {
+        steer_intern = 0;
+      }
+      // CAR ALIGNED - DRIVE A LITTTLE AND STEER GENTLY
+      carControl(steer_intern, 75, 0, 0.5);
     }
-    else if ((closestTarget.angleToTarget > 70 or closestTarget.angleToTarget < -70) and closestTarget.distance < 0.25)
+
+    else if (closestTarget.angleToTarget > -10 and closestTarget.angleToTarget < 10 and closestTarget.distance >= 1.5)
     {
+      BTprintError(3);
+      // CAR ALIGNED BUT FAR - DRIVE FORWARD
+      driveTime = (closestTarget.distance - 0.1) / car_speed; 
+      carControl(0, 75, 0, driveTime);
+    }
+      
+    else if (closestTarget.angleToTarget > -40 and closestTarget.angleToTarget < 40 and closestTarget.distance < 0.5)
+    {
+      BTprintError(4);
       // CAN TOO STEEP AN ANGLE TO HIT
-      carControl(0, 0, 75, 1); // reverse straight
+      if(closestTarget.angleToTarget<0)
+      {
+        steer_intern = -20;
+      }
+      else if (closestTarget.angleToTarget>0)
+      {
+        steer_intern = 20;
+      }
+      else
+      {
+        steer_intern = 0;
+      }
+
+      carControl(-steer_intern, 0, 75, 0.3); // reverse away from can
     }
-    else if (closestTarget.angleToTarget > 70 and closestTarget.distance >= 0.25)
+    else if (closestTarget.angleToTarget > -40 and closestTarget.angleToTarget < 40 and closestTarget.distance >= 0.5)
     {
-      // CAN IS STEEP AND FAR AWAY. GO FORWARD RIGHT AND REVERSE LEFT TO LINE UP
-      carControl(20, 75, 0, 1);
-      carControl(-20, 0, 75, 1);
+      BTprintError(5);
+      if(closestTarget.angleToTarget<0)
+      {
+        steer_intern = -20;
+      }
+      else if (closestTarget.angleToTarget>0)
+      {
+        steer_intern = 20;
+      }
+      else
+      {
+        steer_intern = 0;
+      }
+      //CAR LESS ALIGNED - STEER MORE
+      carControl(steer_intern, 75, 0, 0.6);
     }
-    else if (closestTarget.angleToTarget < -70 and closestTarget.distance >= 0.25)
+
+    else if (closestTarget.angleToTarget > -70 and closestTarget.angleToTarget < 70 and closestTarget.distance < 1)
     {
-      // CAN IS STEEP AND FAR. GO FORWARD LEFT AND REVERSE RIGHT TO LINE UP
-      carControl(-20, 75, 0, 1);
-      carControl(20, 0, 75, 1);
+      BTprintError(7);
+      // CAN TOO STEEP AN ANGLE TO HIT
+      carControl(-closestTarget.angleToTarget, 0, 75, 0.5); // reverse away from can
     }
-    else if (closestTarget.distance < 0.25 and closestTarget.angleToTarget < 0)
+
+    else if (closestTarget.angleToTarget > -70 and closestTarget.angleToTarget < 70 and closestTarget.distance >= 1)
     {
-      // CAN IS CLOSE AND TO THE LEFT
-      carControl(-20, 50, 0, 1);
+      BTprintError(8);
+      if(closestTarget.angleToTarget<0)
+      {
+        steer_intern = -20;
+      }
+      else if (closestTarget.angleToTarget>0)
+      {
+        steer_intern = 20;
+      }
+      else
+      {
+        steer_intern = 0;
+      }
+      carControl(steer_intern, 75, 0, 0.75);
     }
-    else if (closestTarget.distance < 0.25 and closestTarget.angleToTarget > 0)
+
+    else if ((closestTarget.angleToTarget > -90 and closestTarget.angleToTarget < 90) and closestTarget.distance < 1)
     {
-      // CAN IS CLOSE AND TO THE RIGHT
-      carControl(-0, 50, 0, 1);
+      BTprintError(9);
+      // CAN TOO STEEP AN ANGLE TO HIT
+      carControl(-closestTarget.angleToTarget, 0, 75, 0.5); // reverse away from can
+      carControl(0, 75, 0, 0.75); // reverse away from can
     }
-    else if (closestTarget.angleToTarget > 0)
+
+    else if ((closestTarget.angleToTarget > -90 or closestTarget.angleToTarget < 90) and closestTarget.distance >= 1)
     {
-      // CAN IS FAR AND TO THE RIGHT
-      driveTime = (closestTarget.angleToTarget / 90) * 0.9; // it takes 0.9 seconds to turn 90 degrees at 75 power: use this as reference
-      carControl(20, 75, 0, driveTime);
-      driveTime = ((closestTarget.distance - 0.25) / car_speed) - driveTime; // drive straight for the remaiunder
-      carControl(0, 100, 0, driveTime);
+      if(closestTarget.angleToTarget<0)
+      {
+        steer_intern = -20;
+      }
+      else if (closestTarget.angleToTarget>0)
+      {
+        steer_intern = 20;
+      }
+      else
+      {
+        steer_intern = 0;
+      }
+      carControl(steer_intern, 75, 0, 1);
     }
-    else if (closestTarget.angleToTarget < 0)
-    {
-      // CAN IS FAR AND TO THE LEFT
-      driveTime = (-1 * closestTarget.angleToTarget / 90) * 1.2; // it takes 0.9 seconds to turn 90 degrees TUNE!
-      carControl(-20, 75, 0, driveTime);
-      driveTime = ((closestTarget.distance - 0.25) / car_speed) - driveTime; // drive straight for the remaiunder
-      carControl(0, 100, 0, driveTime);
-    }
+
+    delay(500); // delay to allow for momentum to stop
   }
 }

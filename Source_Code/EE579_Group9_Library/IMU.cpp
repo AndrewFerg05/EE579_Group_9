@@ -225,9 +225,6 @@ void updateYaw()
 }
 
 float average_Yaw[5] = {0.0, 0.0, 0.0, 0.0, 0.0};
-float prev_yaw = 0;
-float average = 0;
-float wrong_count = 0;
 int i = 0;
 int flag = 0;
 
@@ -245,36 +242,19 @@ float getYaw()
 
   if (i == 4)
   {
-    prev_yaw = (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4]) / 5;
     flag = 1;
   }
 
   if (i == 5)
+  {
     i = 0;
+  }
+
 
   average_Yaw[i] = yaw;
   i++;
   if (flag == 0)
     return yaw;
 
-  average = (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4]) / 5;
-
-  if (((average - prev_yaw) > 20) || ((average - prev_yaw) < -20))
-  {
-    wrong_count++;
-
-    if (wrong_count > 5)
-    {
-      wrong_count = 0;
-      prev_yaw = average;
-    }
-
-    return prev_yaw;
-  }
-  else
-  {
-    wrong_count = 0;
-    prev_yaw = average;
-    return average;
-  }
+  return (average_Yaw[0] + average_Yaw[1] + average_Yaw[2] + average_Yaw[3] + average_Yaw[4]) / 5;
 }
