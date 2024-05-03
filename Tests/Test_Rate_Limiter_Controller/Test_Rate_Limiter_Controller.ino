@@ -24,7 +24,7 @@
 #define MOTOR_STEER_PIN 17
 #define DRIVE_PWM_FREQ 10
 #define STEER_PWM_FREQ 50
-#define RATE_INTERVAL 1            //Change to set duration in ms between Rate updates
+#define RATE_INTERVAL 10            //Change to set duration in ms between Rate updates
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -104,9 +104,6 @@ void loop()
         actual_yaw= getYaw();
         desired_yaw = normalizeAngle360(actual_yaw + TARGET_ANGLE);
 
-        BTprintfloat(desired_yaw);
-//        BTprintfloat(1000000001);
-
         
         Serial.print("Desired yaw: ");
         Serial.println(desired_yaw, 0);
@@ -138,9 +135,9 @@ void loop()
         forward(0);
         reverse(0);
         delay(1000);
-        steer(20);
+        steer(0);
         delay(1000);
-                steer(-20);
+                steer(-0);
         delay(1000); 
                 steer(0);
         delay(1000);  
@@ -148,7 +145,7 @@ void loop()
         start_flag = getBluetoothFlag();
         if(start_flag == 1)
         {
-          next_state = drive; 
+          next_state = drive;
           start_flag = 0;
           IdleMode = schedule(8000);
           RateUpdate = schedule(RATE_INTERVAL);
@@ -162,30 +159,24 @@ void loop()
       actual_yaw= getYaw();
       if( Rate_flag == 1)
       {
+//        BTprintfloat(actual_yaw);
         control_signal = rateLimiter(desired_yaw, actual_yaw, control_signal);
-        forward(50);
+        BTprintfloat(control_signal);
+        forward(75);
         steer(control_signal);
-        if (millis() - lastPrint > PRINT_SPEED) 
-          {
-//            BTprintfloat(actual_yaw);
-            BTprintfloat(actual_yaw);
-//            BTprintfloat(100000000000000001);
-            lastPrint = millis(); // Update lastPrint time
-          }
-
         Rate_flag = 0;
       }
     
-//    if (millis() - lastPrint > PRINT_SPEED) 
-//    {
-//      Serial.print("Actual:   ");
-//      Serial.println(actual_yaw, 0);
-//      Serial.print("Desired:   ");
-//      Serial.println(desired_yaw, 0);
-//      Serial.print("Control Signal:   ");
-//      Serial.println(control_signal, 0);
-//      lastPrint = millis(); // Update lastPrint time
-//    }
+    if (millis() - lastPrint > PRINT_SPEED) 
+    {
+      Serial.print("Actual:   ");
+      Serial.println(actual_yaw, 0);
+      Serial.print("Desired:   ");
+      Serial.println(desired_yaw, 0);
+      Serial.print("Control Signal:   ");
+      Serial.println(control_signal, 0);
+      lastPrint = millis(); // Update lastPrint time
+    }
       
         break;
       }

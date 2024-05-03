@@ -62,6 +62,28 @@ enum State
 enum State current_state = idle, next_state = idle;
 bool start_flag = 0;
 
+void test_steer(int steering)
+{
+  // Constrain steering angle input
+//  steering = constrain(steering, -20, 20);
+//
+//  int dutycycle;
+//  //  Straight = Duty Cycle 82
+//  //  Full lock left = Duty Cycle 71
+//  //  Full lock left = Duty Cycle 88
+//
+//  if (steering < 0)
+//  {
+//    // Map the range from -20 to 0 to the duty cycle range of 71 to 82 - full left steerin range
+//    dutycycle = map(steering, -20, 0, 71, 82);
+//  }
+//  else
+//  {
+//    // Map the range from 0 to 20 to the duty cycle range of 82 to 88 - full right steering range
+//    dutycycle = map(steering, 0, 20, 82, 88);
+//  }
+  ledcWrite(3, steering); // Update servo PWM duty cycle
+}
 
 void setup() 
 {
@@ -105,51 +127,51 @@ void loop()
         forward(100);
         delay(1000);
         forward(0);
-        delay(1000);
+        delay(2000);
         reverse(100);
         delay(1000);
         reverse(0);
-        delay(1000);
+        delay(2000);
 
         steer(-10);
         forward(100);
         delay(1000);
         forward(0);
-        delay(1000);
+        delay(2000);
         reverse(100);
         delay(1000);
         reverse(0);
-        delay(1000);
+        delay(2000);
                 
         steer(0);
         forward(100);
-        delay(1000);
+        delay(2000);
         forward(0);
-        delay(1000);
+        delay(4000);
         reverse(100);
-        delay(1000);
+        delay(2000);
         reverse(0);
-        delay(1000);
+        delay(4000);
         
         steer(10);
         forward(100);
         delay(1000);
         forward(0);
-        delay(1000);
+        delay(2000);
         reverse(100);
         delay(1000);
         reverse(0);
-        delay(1000);
+        delay(2000);
 
         steer(20);
         forward(100);
         delay(1000);
         forward(0);
-        delay(1000);
+        delay(2000);
         reverse(100);
         delay(1000);
         reverse(0);
-        delay(1000);
+        delay(2000);
         next_state = idle;
         break;
       }
