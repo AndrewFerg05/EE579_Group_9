@@ -96,6 +96,13 @@ void strikeCanCloseDistance()
       rescan = false;
     }
     closestTarget.angleToTarget+=7;
+
+    if (closestTarget.distance > 6)
+    {
+      closestTarget.angleToTarget=169;
+    }
+
+
     BTprintint(closestTarget.angleToTarget);
     if (closestTarget.angleToTarget > -10 and closestTarget.angleToTarget < 10 and closestTarget.distance < 0.4)
     {
@@ -117,18 +124,18 @@ void strikeCanCloseDistance()
       BTprintError(3);
       if(closestTarget.angleToTarget<0)
       {
-        steer_intern = -10;
+        steer_intern = -5;
       }
       else if (closestTarget.angleToTarget>0)
       {
-        steer_intern = 10;
+        steer_intern = 5;
       }
       else
       {
         steer_intern = 0;
       }
       // CAR ALIGNED - DRIVE A LITTTLE AND STEER GENTLY
-      carControl(steer_intern, 75, 0, 0.5);
+      carControl(steer_intern, 75, 0, 0.3);
     }
 
     else if (closestTarget.angleToTarget > -10 and closestTarget.angleToTarget < 10 and closestTarget.distance >= 1.5)
@@ -174,7 +181,7 @@ void strikeCanCloseDistance()
         steer_intern = 0;
       }
       //CAR LESS ALIGNED - STEER MORE
-      carControl(steer_intern, 75, 0, 0.6);
+      carControl(steer_intern, 75, 0, 0.4);
     }
 
     else if (closestTarget.angleToTarget > -70 and closestTarget.angleToTarget < 70 and closestTarget.distance < 1)
