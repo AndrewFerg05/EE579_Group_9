@@ -20,7 +20,7 @@
 #define MOTOR_STEER_PIN 17
 #define DRIVE_PWM_FREQ 10
 #define STEER_PWM_FREQ 50
-#define RATE_LIMIT_INTERVAL 50           //Change to set duration in ms between Rate_Limit updates
+#define RATE_LIMIT_INTERVAL 10           //Change to set duration in ms between Rate_Limit updates
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -58,7 +58,7 @@ enum State current_state = programme, next_state = programme;
 //Events
 Time CurrentTime = {0,0};
 Time IdleMode = {0, -1};
-Time ProgrammeReady = {2,0};
+Time ProgrammeReady = {0,-1};
 Time DriveMode = {0, -1};
 Time SlowMode = {0, -1};
 Time TargetMode = {0, -1};
@@ -172,6 +172,7 @@ void setup()
   setupIMU();
   setupTimer();
   setupBluetooth();
+  ProgrammeReady = schedule(4000);
 }
 
 
@@ -184,6 +185,7 @@ void loop()
       case programme:
       {
         straight_yaw = getYaw();
+        BTprintError(100);
         if(programme_ready_flag == 1)
         {
             //Move wheels back and forth
@@ -298,8 +300,11 @@ void loop()
         actual_yaw= getYaw();
         if( Rate_flag == 1)
         {
+          BTprintError(101);
+          BTprintfloat(actual_yaw);
+          BTprintfloat(Targets[target_select].angleToTarget);
           control_signal = rateLimiter(Targets[target_select].angleToTarget, actual_yaw, control_signal);
-          forward(100);
+          forward(75);
           steer(control_signal);
           
           Rate_flag = 0;

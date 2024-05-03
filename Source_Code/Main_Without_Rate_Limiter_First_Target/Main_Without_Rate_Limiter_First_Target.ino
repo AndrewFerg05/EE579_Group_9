@@ -20,7 +20,7 @@
 #define MOTOR_STEER_PIN 17
 #define DRIVE_PWM_FREQ 10
 #define STEER_PWM_FREQ 50
-#define RATE_LIMIT_INTERVAL 50           //Change to set duration in ms between Rate_Limit updates
+#define RATE_LIMIT_INTERVAL 10           //Change to set duration in ms between Rate_Limit updates
 
 //Test Print Variables
 #define PRINT_SPEED 200 // ms between prints
@@ -172,6 +172,7 @@ void setup()
   setupIMU();
   setupTimer();
   setupBluetooth();
+  setupUltrasound();
 }
 
 
@@ -264,6 +265,7 @@ void loop()
       {
 
         //Wait for BT start signal
+        turnServo(90);
         forward(0);
         reverse(0);
         steer(0);
@@ -295,9 +297,10 @@ void loop()
       
       case drive:
       {
+        BTprintint(1);
         if(target_select == 0)
         {
-          forward(100);
+          forward(75);
           steer(0);
             Serial.print("DRIVE FIRST");
             Serial.println();
@@ -327,6 +330,7 @@ void loop()
       
       case slow:
       {
+        BTprintint(2);
         forward(0);
         reverse(25);
         steer(0);
@@ -342,12 +346,13 @@ void loop()
 
       case target:
       {
+        BTprintint(3);
         reverse(0);
            
         strikeCanCloseDistance();
 //        delay(1000);
         next_state = stabilize_IMU;
-        DriveMode = schedule(500);
+        DriveMode = schedule(2000);
 
           Serial.print("Target");
           Serial.println();
@@ -357,6 +362,7 @@ void loop()
 
       case stabilize_IMU:
       {
+        BTprintint(4);
         actual_yaw= getYaw();
         //Calculate params 
           if (millis() - lastPrint > PRINT_SPEED) 
@@ -371,6 +377,7 @@ void loop()
       
       case endsequence:
       {
+        BTprintint(5);
         reverse(0);
         actual_yaw= getYaw();
         if( Rate_flag == 1)
