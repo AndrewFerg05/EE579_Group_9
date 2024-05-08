@@ -66,7 +66,7 @@ void setup()
   Serial.begin(115200);
   setupUltrasound();
   turnServo(90);
-  delay(5000);
+  delay(10000);
 }
 
 void loop() 
