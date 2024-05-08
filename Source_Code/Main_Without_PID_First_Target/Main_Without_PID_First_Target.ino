@@ -342,9 +342,9 @@ void loop()
               Serial.println(Targets[index].isWaypoint);
            }
 
-////          //Non-BlueTooth Definitions            
+//            //Non-BlueTooth Definitions            
 //            //Set Target 0
-//            Targets[0].distance = 1;
+//            Targets[0].distance = 10;
 //            Targets[0].angleFromStraight = 215 + straight_yaw;
 //            Targets[0].isWaypoint = false;
 //            //Set Target 1
@@ -379,7 +379,6 @@ void loop()
         steer(0);
         //Wait for BT start signal
         start_flag = getBluetoothFlag();
-//        start_flag = 1;
         
         if(start_flag == 1)
         {
@@ -413,7 +412,7 @@ void loop()
         if(target_select == 0)
         {
           forward(100);
-          steer(-1);
+          steer(0);
         
         if (millis() - lastPrint > PRINT_SPEED) 
         {
@@ -484,7 +483,7 @@ void loop()
              next_state = stabilize_IMU;      //Allow some IMU readings to be taken
              HitMode = schedule(500);         //Schedule Transition to hit mode
              closestTarget.distance = closestTarget.distance/100;    //Convert to m
-             calculateTimeAndAngle(&closestTarget);       //Note calculating with angle from car direction not heading - heading calculated in Stabalize_IMU before PID 
+             calculateTime(&closestTarget);       //Note calculating with angle from car direction not heading - heading calculated in Stabalize_IMU before PID 
          } else 
          {
               Serial.println("UNABLE TO LOCATE TARGET");
@@ -501,7 +500,7 @@ void loop()
       if(target_select != 1)
       { 
       closestTarget.angleToTarget = normalizeAngle360( closestTarget.angleToTarget + actual_yaw);              //Calculate absolute angle to can
-      calculateTimeAndAngle(&closestTarget);                  //Calculate params 
+      calculateTime(&closestTarget);                  //Calculate params 
           if (millis() - lastPrint > PRINT_SPEED) 
         {
           Serial.print("Stabilize_IMU with calcs");

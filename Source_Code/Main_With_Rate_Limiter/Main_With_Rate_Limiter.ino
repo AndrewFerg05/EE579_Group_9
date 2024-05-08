@@ -185,7 +185,6 @@ void loop()
       case programme:
       {
         straight_yaw = getYaw();
-        BTprintError(100);
         if(programme_ready_flag == 1)
         {
             //Move wheels back and forth
@@ -324,7 +323,7 @@ void loop()
       case slow:
       {
         forward(0);
-        reverse(50);
+        reverse(10);
         steer(0);
         
         if (millis() - lastPrint > PRINT_SPEED) 

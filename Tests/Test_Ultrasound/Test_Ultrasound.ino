@@ -24,7 +24,7 @@
 //ESP32 GPIO16 / RX2 - Servo Control 
 
 
-//13/04/24 - Known Issue - the average yaw returned by getYaw() does not transition smoothly from 360 degrees back to 0 degrees
+
 
 
 #include "Target.h"
